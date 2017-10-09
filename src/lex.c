@@ -70,6 +70,7 @@ void lex_load_file( char *file, unsigned int *nlines ) {
 
         /*read source code line-by-line */
         if ( NULL != fgets( line, STRLEN-1, fp ) ) {
+
             line[strlen(line)-1] = '\0';  /* eat final '\n' */
             (*nlines)++;
 
@@ -96,17 +97,73 @@ void lex_load_file( char *file, unsigned int *nlines ) {
 /* note that MIPS assembly supports distinctions between lower and upper case*/
 void lex_standardise( char* in, char* out ) {
 
-    unsigned int i, j;
+    unsigned int i, j, k;
+    
+    k = 0;
+    WARNING_MSG("%s",in);
 
     for ( i= 0, j= 0; i< strlen(in); i++ ) {
-        /*TODO : ajouter les autres transformations*/
 
-        /* translate all spaces (i.e., tab) into simple spaces*/
-        if (isblank((int) in[i])) out[j++]=' ';
-        else out[j++]=in[i];
+        /* translate all spaces (i.e., tab) into simple spaces, we use k to delete futher spaces */
+		
+		if (isblank((int) in[i])) {
+		    k = 1;
+        }
+        else{
+        	if (k && (in[i] == ':' || in[i] == ',') )
+        	{
+        		out[j]=in[i];
+        		
+        		
+        		/* If the character after is blank, we do nothing */
+        		
+        		if ( isblank((int) in[i+1]) || i+1 == strlen(in) ) {
+        			j++;
+        		}
+        		else {
+        		    out[j+1]=' ';
+        			j = j + 2;
+        		}
+        		
+        		k=0;
+        	}
+        	else if (k)
+        	{
+        		out[j]=' ';
+        		out[j+1]=in[i];
+        		j = j + 2;
+        		k=0;
+        	}
+        	else {
+		    	out[j]=in[i];
+		    	j++;
+        	}
+        	
+        }
+		
     }
     out[j]='\0';
+    
+    WARNING_MSG("%s",out);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
