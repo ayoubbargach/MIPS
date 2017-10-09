@@ -64,6 +64,53 @@
  */
 #define FAILURE          1
 
+/*!
+  \brief INTERNALS: Definition of some state for our FSM.
+ */
+
+enum {INIT, DECIMAL_ZERO, DECIMAL, OCTO, HEXA, SYMBOL, COMMENT, REGISTER, DIRECTIVE, ERROR};
+
+/*!
+  \brief INTERNALS: Type definition of dig.
+ */
+ 
+typedef struct digit_t {
+	unsigned int type;
+	
+	union {
+		int integer;
+		int octo;
+		char * hexa;
+	}this;
+} dig;
+
+/*!
+  \brief INTERNALS: Type definition of lex.
+ */
+ 
+typedef struct lexeme_t {
+	unsigned int type;
+	
+	union {
+		dig digit;
+		char * symbol;
+		char * directive;
+		
+	}this;
+} lex;
+
 
 #endif /* _GLOBAL_H */
+
+
+
+
+
+
+
+
+
+
+
+
 

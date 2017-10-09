@@ -41,13 +41,13 @@ int main ( int argc, char *argv[] ) {
 
     /* exemples d'utilisation des macros du fichier notify.h */
     /* WARNING_MSG : sera toujours affiche */
-    WARNING_MSG("Un message WARNING_MSG !");
+    WARNING_MSG("Holà !");
 
     /* macro INFO_MSG : uniquement si compilé avec -DVERBOSE. Cf. Makefile*/
     INFO_MSG("Un message INFO_MSG : Debut du programme %s", argv[0]);
 
     /* macro DEBUG_MSG : uniquement si compilé avec -DDEBUG (ie : compilation avec make debug). Cf. Makefile */
-    DEBUG_MSG("Un message DEBUG_MSG !");
+    DEBUG_MSG("Good work Youbi !");
 
     /* La macro suivante provoquerait l'affichage du message
        puis la sortie du programme avec un code erreur non nul (EXIT_FAILURE) */

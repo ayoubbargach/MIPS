@@ -26,17 +26,108 @@
  *
  */
 void lex_read_line( char *line, int nline) {
-    char *seps = " \t";
+
+	/* Initialisation of FSM */
+	int i;
+	int state = INIT;
+	
+	/* Useful when a token is defined as a comment, all the following tokens are also undertood in the same way */
+	int comment = 0;
+	
+	/* After standirising, we only need ' ' as sep */
+    char *seps = " ";
     char *token = NULL;
     char save[STRLEN];
 
     /* copy the input line so that we can do anything with it without impacting outside world*/
     memcpy( save, line, STRLEN );
+    
 
-    /* get each token*/
-    for( token = strtok( line, seps ); NULL != token; token = strtok( NULL, seps )) {
-        /* TODO : faire l'analyse lexical de chaque token ici et les ajouter dans une collection*/
-        puts(token);
+    /* get each token */
+    for( token = strtok( save, seps ); NULL != token; token = strtok( NULL, seps )) {
+        for ( i= 0; i< strlen(token); i++ ) {
+        	
+        	switch (state) {
+        		case INIT :
+        			if ( token[i] == '#' || comment != 0) {
+        				state = COMMENT;
+        			}
+        			else if ( token[i] == '0' ) {
+        				state = DECIMAL_ZERO;
+        			}
+        			else if ( isdigit(token[i]) ) {
+        				state = DECIMAL;
+        			}
+        			else if ( token[i] == '.' ) {
+        				state = DIRECTIVE;
+        			}
+        			else if ( token[i] == '$' ) {
+        				state = REGISTER;
+        			}
+        			else {
+        				state = SYMBOL;
+        			}
+        			
+        			
+        			
+        			break;
+        			
+        		case COMMENT :
+        			if ( i == strlen(token)-1) {
+        			
+        				/* For each token, we show the comment for debug : */ 
+        				DEBUG_MSG("[COMMENT] %s", token); 
+        			}
+        			
+        			break;
+        		
+        		case DECIMAL_ZERO :
+        			if ( isdigit(token[i]) ) {
+        				if ( token[i] < '8' ) {
+        					state = OCTO;
+        				}
+        				else if ( token[i] == 'x' ) {
+        					state = HEXA;
+        				}
+        				else state = ERROR;
+        			}
+        			
+        			break;
+        		
+        		case DECIMAL :
+					
+					break;  
+					      			
+        		case OCTO:
+					
+					break; 
+					      			
+        		case HEXA:
+					
+					break;
+					     			
+        		case DIRECTIVE:
+					
+					break; 
+					     			
+        		case REGISTER:
+					
+					break; 
+					     			
+        		case SYMBOL:
+					
+					break; 
+					     			
+        		default :
+					
+					break;
+        			
+        		
+        	
+        	
+        	}
+        	
+        }
 
     }
 
@@ -100,7 +191,6 @@ void lex_standardise( char* in, char* out ) {
     unsigned int i, j, k;
     
     k = 0;
-    WARNING_MSG("%s",in);
 
     for ( i= 0, j= 0; i< strlen(in); i++ ) {
 
@@ -110,19 +200,20 @@ void lex_standardise( char* in, char* out ) {
 		    k = 1;
         }
         else{
-        	if (k && (in[i] == ':' || in[i] == ',') )
+        	if (in[i] == ':' || in[i] == ',' || in[i] == '#' )
         	{
-        		out[j]=in[i];
+        		out[j] = ' ';
+        		out[j+1]=in[i];
         		
         		
         		/* If the character after is blank, we do nothing */
         		
         		if ( isblank((int) in[i+1]) || i+1 == strlen(in) ) {
-        			j++;
+        			j = j + 2;
         		}
         		else {
-        		    out[j+1]=' ';
-        			j = j + 2;
+        		    out[j+2]=' ';
+        			j = j + 3;
         		}
         		
         		k=0;
@@ -143,8 +234,7 @@ void lex_standardise( char* in, char* out ) {
 		
     }
     out[j]='\0';
-    
-    WARNING_MSG("%s",out);
+    WARNING_MSG("%s", out);
 }
 
 
