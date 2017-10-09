@@ -65,10 +65,10 @@
 #define FAILURE          1
 
 /*!
-  \brief INTERNALS: Definition of some state for our FSM.
+  \brief INTERNALS: Definition of some state for our FSM. EXIT is managed the same way as COMMENT : We do not consider it. ( ',' for example)
  */
 
-enum {INIT, DECIMAL_ZERO, DECIMAL, OCTO, HEXA, SYMBOL, COMMENT, REGISTER, DIRECTIVE, ERROR};
+enum {INIT, DECIMAL_ZERO, DECIMAL, OCTO, HEXA, SYMBOL, COMMENT, REGISTER, DIRECTIVE, COMMA, ERROR};
 
 /*!
   \brief INTERNALS: Type definition of dig.

@@ -19,6 +19,58 @@
 #include <lex.h>
 
 /**
+ * @param state The state enum (FSM).
+ * @return should return a string with the same name as enum case.
+ * @brief This function is useful for debug trace only.
+ *
+ */
+ 
+char* state_to_string(int state) {
+	switch (state) {
+    		case COMMENT :
+    			return "COMMENT";
+    			break;
+    		
+    		case DECIMAL_ZERO :
+    			return "DECIMAL_ZERO";
+    			break;
+    		
+    		case DECIMAL :
+    			return "DECIMAL";
+				break;  
+				      			
+    		case OCTO:
+    			return "OCTO";
+				break; 
+				      			
+    		case HEXA:
+    			return "HEXA";
+				break;
+				     			
+    		case DIRECTIVE:
+    			return "DIRECTIVE";
+				break; 
+				     			
+    		case REGISTER:
+    			return "REGISTER";
+				break; 
+				     			
+    		case SYMBOL:
+    			return "SYMBOL";
+				break;
+				
+			case COMMA:
+    			return "COMMA";
+				break; 
+				     			
+    		default :
+    			return "ERROR";
+				break;
+	}
+}
+
+
+/**
  * @param line String of the line of source code to be analysed.
  * @param nline the line number in the source code.
  * @return should return the collection of lexemes that represent the input line of source code.
@@ -27,9 +79,7 @@
  */
 void lex_read_line( char *line, int nline) {
 
-	/* Initialisation of FSM */
 	int i;
-	int state = INIT;
 	
 	/* Useful when a token is defined as a comment, all the following tokens are also undertood in the same way */
 	int comment = 0;
@@ -45,11 +95,16 @@ void lex_read_line( char *line, int nline) {
 
     /* get each token */
     for( token = strtok( save, seps ); NULL != token; token = strtok( NULL, seps )) {
+    	
+    	/* Initialisation of FSM */
+    	int state = INIT;
+    	
         for ( i= 0; i< strlen(token); i++ ) {
         	
         	switch (state) {
         		case INIT :
         			if ( token[i] == '#' || comment != 0) {
+        				comment = 1;
         				state = COMMENT;
         			}
         			else if ( token[i] == '0' ) {
@@ -64,20 +119,14 @@ void lex_read_line( char *line, int nline) {
         			else if ( token[i] == '$' ) {
         				state = REGISTER;
         			}
+        			else if ( token[i] == ',' ) {
+        				state = COMMA;
+        			}
         			else {
         				state = SYMBOL;
         			}
         			
         			
-        			
-        			break;
-        			
-        		case COMMENT :
-        			if ( i == strlen(token)-1) {
-        			
-        				/* For each token, we show the comment for debug : */ 
-        				DEBUG_MSG("[COMMENT] %s", token); 
-        			}
         			
         			break;
         		
@@ -95,29 +144,21 @@ void lex_read_line( char *line, int nline) {
         			break;
         		
         		case DECIMAL :
-					
+					state = (isdigit( token[i] )) ? DECIMAL : ERROR;
 					break;  
 					      			
         		case OCTO:
+        			state = ( isdigit( token[i] ) || token[i]<'8' ) ? OCTO : ERROR;
 					
 					break; 
 					      			
         		case HEXA:
+        			state = ( isxdigit( token[i] ) ) ? HEXA : ERROR;
 					
 					break;
-					     			
-        		case DIRECTIVE:
 					
-					break; 
-					     			
-        		case REGISTER:
-					
-					break; 
-					     			
-        		case SYMBOL:
-					
-					break; 
-					     			
+				
+				/* All other states are managed by default */			
         		default :
 					
 					break;
@@ -127,9 +168,14 @@ void lex_read_line( char *line, int nline) {
         	
         	}
         	
+        	
         }
+        
+        /* We use the final value of state to determine the lexeme */
+        DEBUG_MSG("[%s] %s", state_to_string(state), token);
 
     }
+    DEBUG_MSG("[NL]");
 
     return;
 }
@@ -200,7 +246,7 @@ void lex_standardise( char* in, char* out ) {
 		    k = 1;
         }
         else{
-        	if (in[i] == ':' || in[i] == ',' || in[i] == '#' )
+        	if (in[i] == ',' )
         	{
         		out[j] = ' ';
         		out[j+1]=in[i];
@@ -214,6 +260,46 @@ void lex_standardise( char* in, char* out ) {
         		else {
         		    out[j+2]=' ';
         			j = j + 3;
+        		}
+        		
+        		k=0;
+        	}
+        	else if ( in[i] == '#' )
+        	{
+        		/* If we have a space before, we add one. If not, nothing to do. */
+        		if (k) {
+        			out[j]=' ';
+        			j++;
+        		}
+        		
+        		out[j]=in[i];
+        		
+        		
+        		/* If the character after is blank, we do nothing */
+        		
+        		if ( isblank((int) in[i+1]) || i+1 == strlen(in) ) {
+        			j++;
+        		}
+        		else {
+        		    out[j+1]=' ';
+        			j = j + 2;
+        		}
+        		
+        		k=0;
+        	}
+        	else if ( in[i] == ':' )
+        	{
+        		out[j]=in[i];
+        		
+        		
+        		/* If the character after is blank, we do nothing */
+        		
+        		if ( isblank((int) in[i+1]) || i+1 == strlen(in) ) {
+        			j++;
+        		}
+        		else {
+        		    out[j+1]=' ';
+        			j = j + 2;
         		}
         		
         		k=0;
@@ -234,7 +320,10 @@ void lex_standardise( char* in, char* out ) {
 		
     }
     out[j]='\0';
-    WARNING_MSG("%s", out);
+    
+    /* To compare in and out :
+    WARNING_MSG("%s", in);
+    WARNING_MSG("%s", out); */
 }
 
 
