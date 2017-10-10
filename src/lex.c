@@ -188,11 +188,11 @@ void lex_read_line( char *line, int nline, chain newline) {
 			/* Add lexeme to the element */
 			add_lex(element, lexeme);
 		
-			/* TEST Code */
+			/* TEST Code
 			if (read_lex(element) != NULL ) {
 				WARNING_MSG("%s", state_to_string( read_lex(element)->type ) );
-			}
-
+			} */
+			
 		
 			/* Create a new chain element to store the next lexeme */
 			element = add_chain_next( element );
@@ -200,7 +200,6 @@ void lex_read_line( char *line, int nline, chain newline) {
         
 
     }
-    DEBUG_MSG("[NL]");
 
     return;
 }
@@ -247,8 +246,36 @@ void lex_load_file( char *file, unsigned int *nlines ) {
             }
         }
         
-        /* We add a newline in our collection */
-    	newline = add_chain_newline( newline );
+        /* We add a newline in our collection, the condition helps to avoid possible "blank" lines in the collection */
+        
+        if (read_line( newline ) != NULL) {
+    		newline = add_chain_newline( newline );
+    	}
+    }
+    
+    /* TEST code */
+    
+    chain chcopy = ch;
+    chain in;
+    
+    WARNING_MSG("%d", (*nlines));
+    
+    while (  chcopy != NULL ) {
+    	in = chcopy;
+    	in = read_line( in );
+    	while ( in != NULL ) {
+    		
+    		
+    		if (read_lex( in ) != NULL ) {
+				WARNING_MSG("%s", state_to_string( read_lex(in)->type ) );
+			}
+			
+    		in = read_line( in );
+    	}
+    	
+    	DEBUG_MSG("[NL]");
+    	chcopy = next_line( chcopy );
+    	
     }
 
     fclose(fp);

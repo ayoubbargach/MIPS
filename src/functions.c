@@ -21,7 +21,7 @@
  * @brief
  *
  */
- 
+
 /* ##### chain functions ##### */
  
 /**
@@ -198,6 +198,39 @@ lex read_lex( chain parent ) {
 
 }
 
+/**
+ * @param chain Chain to read.
+ * @return Give next chain to read. Returns NULL if the chain is completed.
+ * @brief Read trough a given chain line. Each time it used, it gives the next chain in the same line.
+ *
+ */
+ 
+chain read_line( chain parent ) {
+	
+	if( parent->next != NULL ) {
+		return parent->next;
+	}
+	
+	return NULL ;
+	
+}
+
+/**
+ * @param chain Chain to read.
+ * @return Give next line to read. Returns NULL if the chain is completed OR if the chain is connected to a lexeme intead of another chain.
+ * @brief Keep in mind the structure, with this function, you can load the next line.
+ *
+ */
+ 
+chain next_line( chain parent ) {
+	
+	if( parent->next != NULL ) {
+		return parent->this.bottom;
+	}
+	
+	return NULL ;
+	
+}
 
 
 

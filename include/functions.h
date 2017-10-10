@@ -17,7 +17,10 @@ chain add_chain_newline( chain );
 lex make_lex( unsigned int, char * );
 void add_lex( chain , lex );
 
+
 lex read_lex( chain );
+chain read_line( chain );
+chain next_line( chain );
 
 
 /* Free functions */
