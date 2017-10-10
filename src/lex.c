@@ -17,6 +17,7 @@
 #include <global.h>
 #include <notify.h>
 #include <lex.h>
+#include <functions.h>
 
 /**
  * @param state The state enum (FSM).
@@ -77,9 +78,10 @@ char* state_to_string(int state) {
  * @brief This function performs lexical analysis of one standardized line.
  *
  */
-void lex_read_line( char *line, int nline) {
+void lex_read_line( char *line, int nline, chain newline) {
 
 	int i;
+	chain element = add_chain_next( newline );
 	
 	/* Useful when a token is defined as a comment, all the following tokens are also undertood in the same way */
 	int comment = 0;
@@ -148,7 +150,7 @@ void lex_read_line( char *line, int nline) {
 					break;  
 					      			
         		case OCTO:
-        			state = ( isdigit( token[i] ) || token[i]<'8' ) ? OCTO : ERROR;
+        			state = ( isdigit( token[i] ) || token[i] < '8' ) ? OCTO : ERROR;
 					
 					break; 
 					      			
@@ -171,8 +173,31 @@ void lex_read_line( char *line, int nline) {
         	
         }
         
-        /* We use the final value of state to determine the lexeme */
-        DEBUG_MSG("[%s] %s", state_to_string(state), token);
+        
+        
+        
+        /* We use the final value of state to determine the lexeme
+        DEBUG_MSG("[%s] %s", state_to_string(state), token); */
+        
+        /* /!\ The comma and comments are not added to the collection (skip if) /!\ */
+        
+        if ( !( state == COMMENT || state == COMMA ) ) {
+			/* Create lexeme and add value */
+			lex lexeme = make_lex( state, token );
+		
+			/* Add lexeme to the element */
+			add_lex(element, lexeme);
+		
+			/* TEST Code */
+			if (read_lex(element) != NULL ) {
+				WARNING_MSG("%s", state_to_string( read_lex(element)->type ) );
+			}
+
+		
+			/* Create a new chain element to store the next lexeme */
+			element = add_chain_next( element );
+		}
+        
 
     }
     DEBUG_MSG("[NL]");
@@ -202,6 +227,11 @@ void lex_load_file( char *file, unsigned int *nlines ) {
     }
 
     *nlines = 0;
+    
+    /* We create a collection used to contruct the tree of lexemes */ 
+    chain ch = make_collection();
+    
+    chain newline = ch;
 
     while(!feof(fp)) {
 
@@ -213,9 +243,12 @@ void lex_load_file( char *file, unsigned int *nlines ) {
 
             if ( 0 != strlen(line) ) {
                 lex_standardise( line, res );
-                lex_read_line(res,*nlines);
+                lex_read_line( res, *nlines, newline );
             }
         }
+        
+        /* We add a newline in our collection */
+    	newline = add_chain_newline( newline );
     }
 
     fclose(fp);

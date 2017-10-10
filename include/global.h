@@ -68,10 +68,12 @@
   \brief INTERNALS: Definition of some state for our FSM. EXIT is managed the same way as COMMENT : We do not consider it. ( ',' for example)
  */
 
-enum {INIT, DECIMAL_ZERO, DECIMAL, OCTO, HEXA, SYMBOL, COMMENT, REGISTER, DIRECTIVE, COMMA, ERROR};
+enum {INIT, DECIMAL_ZERO, DECIMAL, OCTO, HEXA, SYMBOL, COMMENT, REGISTER, DIRECTIVE, COMMA, NIL, ERROR};
+
+
 
 /*!
-  \brief INTERNALS: Type definition of dig.
+  \brief INTERNALS: Type definition of digit.
  */
  
 typedef struct digit_t {
@@ -82,7 +84,7 @@ typedef struct digit_t {
 		int octo;
 		char * hexa;
 	}this;
-} dig;
+} digit;
 
 /*!
   \brief INTERNALS: Type definition of lex.
@@ -92,12 +94,23 @@ typedef struct lexeme_t {
 	unsigned int type;
 	
 	union {
-		dig digit;
-		char * symbol;
-		char * directive;
-		
+		digit digit;
+		char * value;
 	}this;
-} lex;
+} *lex;
+
+/*!
+  \brief INTERNALS: Type definition of chain. To understand the signification of next / bottom, please read the documentation graphs.
+ */
+ 
+typedef struct chain_t {
+	struct chain_t *next;
+	
+	union {
+		struct chain_t *bottom;
+		lex bottom_lex;
+	}this;
+} *chain;
 
 
 #endif /* _GLOBAL_H */

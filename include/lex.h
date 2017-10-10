@@ -13,9 +13,9 @@
 
 #include <stdio.h>
 
-char* state_to_string (int state);
+char*   state_to_string (int state);
 
-void	lex_read_line( char *, int);
+void	lex_read_line( char *, int, chain);
 void	lex_load_file( char *, unsigned int * );
 void	lex_standardise( char*, char*  );
 
