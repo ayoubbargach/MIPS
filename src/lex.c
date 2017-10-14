@@ -82,6 +82,7 @@ void lex_read_line( char *line, int nline, chain newline) {
 
 	int i;
 	chain element = add_chain_next( newline );
+
 	
 	/* Useful when a token is defined as a comment, all the following tokens are also undertood in the same way */
 	int comment = 0;
@@ -98,7 +99,7 @@ void lex_read_line( char *line, int nline, chain newline) {
     /* get each token */
     for( token = strtok( save, seps ); NULL != token; token = strtok( NULL, seps )) {
     	
-    	/* Initialisation of FSM */
+ 		/* Re-initialisation of FSM */
     	int state = INIT;
     	
         for ( i= 0; i< strlen(token); i++ ) {
@@ -176,12 +177,12 @@ void lex_read_line( char *line, int nline, chain newline) {
         
         
         
-        /* We use the final value of state to determine the lexeme
+        /* We use the final value of state to determine the lexeme 
         DEBUG_MSG("[%s] %s", state_to_string(state), token); */
         
         /* /!\ The comma and comments are not added to the collection (skip if) /!\ */
         
-        if ( !( state == COMMENT || state == COMMA ) ) {
+        if ( !( state == COMMENT || state == COMMA || state == INIT ) ) {
 			/* Create lexeme and add value */
 			lex lexeme = make_lex( state, token );
 		
