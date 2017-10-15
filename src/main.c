@@ -13,6 +13,7 @@
 #include <global.h>
 #include <notify.h>
 #include <lex.h>
+#include <syn.h>
 #include <functions.h>
 
 
@@ -79,6 +80,11 @@ int main ( int argc, char *argv[] ) {
     
     lex_load_file( file, &nlines, ch );
     
+    /* Table : */
+
+	inst tab[1000];
+	
+    instructionSet(tab);
     /* We use this collection for the syntactic analysis */
     
     DEBUG_MSG("source code got %d lines",nlines);

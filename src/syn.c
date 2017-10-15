@@ -30,11 +30,7 @@
  *
  */
 
-inst * instructionSet( void ) {
-
-	/* Table : */
-
-	inst * tab = malloc( sizeof( inst ) * 1000 );
+void instructionSet( inst * tab ) {
 	
 	/* File init */
 	FILE *fp   = NULL;
@@ -83,8 +79,8 @@ inst * instructionSet( void ) {
             
             /* Add instruction to the table */
             
-            tab[j] = makeInst( result[0], result[1], result[2], result[3], result[4]);
-            
+            tab[j]= makeInst( result[0], result[1], result[2], result[3], result[4]);
+
             j++;
             
             /*
@@ -95,11 +91,10 @@ inst * instructionSet( void ) {
             
             i=0;
         }
-
+		
 	
 	}
-    
-	return tab;
+	WARNING_MSG("Result : %s", tab[0]->name);
 	
 }
 

@@ -16,7 +16,7 @@
 
 /* For the chain structure, we use the same structure "chain" */
 
-inst* instructionSet( void );
+void instructionSet( inst* );
 inst makeInst( char*, char*, char*, char*, char*  );
 
 char * decodeDirective( chain );
