@@ -16,7 +16,7 @@
 char*   state_to_string (int state);
 
 void	lex_read_line( char *, int, chain);
-void	lex_load_file( char *, unsigned int * );
+void	lex_load_file( char *, unsigned int *, chain );
 void	lex_standardise( char*, char*  );
 
 #endif /* _LEX_H_ */

@@ -13,6 +13,7 @@
 #include <global.h>
 #include <notify.h>
 #include <lex.h>
+#include <functions.h>
 
 
 /**
@@ -72,7 +73,14 @@ int main ( int argc, char *argv[] ) {
 
 
     /* ---------------- do the lexical analysis -------------------*/
-    lex_load_file( file, &nlines );
+    
+    /* We create a collection used to contruct the tree of lexemes */ 
+    chain ch = make_collection();
+    
+    lex_load_file( file, &nlines, ch );
+    
+    /* We use this collection for the syntactic analysis */
+    
     DEBUG_MSG("source code got %d lines",nlines);
 
     /* ---------------- Free memory and terminate -------------------*/

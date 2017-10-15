@@ -63,6 +63,10 @@ char* state_to_string(int state) {
 			case COMMA:
     			return "COMMA";
 				break; 
+			
+			case LABEL:
+    			return "LABEL";
+				break; 
 				     			
     		default :
     			return "ERROR";
@@ -174,6 +178,11 @@ void lex_read_line( char *line, int nline, chain newline) {
         	
         }
         
+        /* verifying if the last character is ":" */
+        if ( token[strlen(token)-1] == ':' && state == SYMBOL) {
+        	state = LABEL;
+        }
+        
         
         
         
@@ -212,7 +221,7 @@ void lex_read_line( char *line, int nline, chain newline) {
  * @brief This function loads an assembly code from a file into memory.
  *
  */
-void lex_load_file( char *file, unsigned int *nlines ) {
+void lex_load_file( char *file, unsigned int *nlines, chain ch ) {
 
     FILE        *fp   = NULL;
     char         line[STRLEN]; /* original source line */
@@ -228,8 +237,6 @@ void lex_load_file( char *file, unsigned int *nlines ) {
 
     *nlines = 0;
     
-    /* We create a collection used to contruct the tree of lexemes */ 
-    chain ch = make_collection();
     
     chain newline = ch;
 

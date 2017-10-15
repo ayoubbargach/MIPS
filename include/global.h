@@ -68,7 +68,7 @@
   \brief INTERNALS: Definition of some state for our FSM. EXIT is managed the same way as COMMENT : We do not consider it. ( ',' for example)
  */
 
-enum {INIT, DECIMAL_ZERO, DECIMAL, OCTO, HEXA, SYMBOL, COMMENT, REGISTER, DIRECTIVE, COMMA, NIL, ERROR};
+enum {INIT, DECIMAL_ZERO, DECIMAL, OCTO, HEXA, SYMBOL, COMMENT, REGISTER, DIRECTIVE, COMMA, LABEL, ERROR};
 
 
 
@@ -99,6 +99,23 @@ typedef struct lexeme_t {
 	}this;
 } *lex;
 
+/* All types of instructions */
+enum {R, I, J};
+
+/* Instruction structure as is use in the instruction set */
+
+typedef struct inst_t {
+	char * name;
+	char * op;
+	int type;
+	
+	/* Give indication about the waited operands in binary 
+	   For example : In R-type, 1010 if $rd and $rt in waited. */
+	   
+	char* operand;
+	char* special;
+} *inst;
+
 /*!
   \brief INTERNALS: Type definition of chain. To understand the signification of next / bottom, please read the documentation graphs.
  */
@@ -109,8 +126,20 @@ typedef struct chain_t {
 	union {
 		struct chain_t *bottom;
 		lex bottom_lex;
+		inst bottom_ins;
 	}this;
 } *chain;
+
+
+/* After decode, used to struture the chain list in order to build the binary code. */
+
+typedef struct code_t {
+	chain origin;
+	
+	/* Decoded code in hexa */
+	char * s;
+	
+} code;
 
 
 #endif /* _GLOBAL_H */
