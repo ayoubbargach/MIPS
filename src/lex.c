@@ -261,7 +261,7 @@ void lex_load_file( char *file, unsigned int *nlines, chain ch ) {
     	}
     }
     
-    /* TEST code */
+    /* TEST code 
     
     chain chcopy = ch;
     chain in;
@@ -285,6 +285,7 @@ void lex_load_file( char *file, unsigned int *nlines, chain ch ) {
     	chcopy = next_line( chcopy );
     	
     }
+    */
 
     fclose(fp);
     return;

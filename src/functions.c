@@ -37,7 +37,7 @@ chain make_collection ( void ) {
 
 	/* Gestion des erreurs */
 	if (ch == NULL) {
-		WARNING_MSG("Erreur Mémoire : Echec Malloc.");
+		WARNING_MSG("Memory error : Echec Malloc.");
 		exit(EXIT_FAILURE);
 	}
 
@@ -62,7 +62,7 @@ chain add_chain_next( chain parent ) {
 
 	/* Gestion des erreurs */
 	if (ch == NULL) {
-		WARNING_MSG("Erreur Mémoire : Echec Malloc.");
+		WARNING_MSG("Memory error : Echec Malloc.");
 		exit(EXIT_FAILURE);
 	}
 
@@ -149,7 +149,7 @@ lex make_lex( unsigned int type, char * value ) {
 				break;
 				     			
     		default :
-    			l->this.value = value;
+    			strncpy ( l->this.value, value, sizeof(l->this.value) );
 				break;
 	}
 	

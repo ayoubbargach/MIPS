@@ -19,8 +19,8 @@
 void instructionSet( inst* );
 inst makeInst( char*, char*, char*, char*, char*  );
 
-char * decodeDirective( chain );
-char * decodeInstruction( chain );
+int decodeInstruction( chain, inst *);
+int decodeDirective( chain );
 
 void addSymbol( chain, chain );
 

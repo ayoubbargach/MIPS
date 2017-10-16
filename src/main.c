@@ -85,6 +85,10 @@ int main ( int argc, char *argv[] ) {
 	inst instSet[1000];
     instructionSet(instSet);
     
+    int test;
+    test = decodeInstruction( ch, instSet );
+    
+    
     /* We use this collection for the syntactic analysis */
     
     DEBUG_MSG("source code got %d lines",nlines);

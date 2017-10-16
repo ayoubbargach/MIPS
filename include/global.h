@@ -95,7 +95,7 @@ typedef struct lexeme_t {
 	
 	union {
 		digit digit;
-		char * value;
+		char value[STRLEN];
 	}this;
 } *lex;
 

@@ -63,7 +63,10 @@ void instructionSet( inst * tab ) {
     char *token = NULL;
     
     /* Used to save the tokenized strings */
-    char* result[10];
+    char* result[5];
+    
+    /* In case there are no special arguments */
+    result[4]=NULL;
     
     while(!feof(fp)) {
     	/*read line-by-line */
@@ -94,6 +97,10 @@ void instructionSet( inst * tab ) {
 	
 	}
 	
+	/* The last one is NULL (to treat with loop) */
+	
+	tab[j] = NULL;
+	
 	/* TEST CODE
 	
 	for (i=0;i<20;i++) {
@@ -123,14 +130,88 @@ inst makeInst( char* name, char* op, char* type, char* operand, char* special ) 
 	strncpy ( ins->op, op, sizeof(ins->op) );
 	ins->type = atoi( type );
 	strncpy ( ins->operand, operand, sizeof(ins->operand) );
-	strncpy ( ins->special, special, sizeof(ins->special) );
-
+	
+	if (special != NULL) {
+		strncpy ( ins->special, special, sizeof(ins->special) );
+	}
+	else {
+		/* If no special indications, we initialize to "." */
+		strncpy ( ins->special, ".", sizeof(ins->special) );
+	}
+	
 	
 	return ins;
 }
 
 
+/**
+ * @return A int that contain the instruction.
+ * @brief In this routine, we decode the instruction using the instruction set. There is 3 types of instructions. We determine the type by analysing the operation symbol.
+ *
+ */
+ 
+/* /!\ int is a 4 bytes type. But if you run this code in an ARM 16 bits for instance (Thumb mode), int will be coded in 2 bytes only ! The assembly will failure /!\ */
 
+int decodeInstruction( chain ch, inst * instSet ) {
+	
+	int result = 0, i = 0;
+	/* We start by verifying the size of int */
+	if ( sizeof( int ) == 4 ) {
+	
+		/* init */
+		
+		chain in;
+		lex l;
+		in = read_line( ch );
+		
+		if (in != NULL) {
+			l = read_lex( in );
+			if ( l != NULL ) {
+				
+				/* The function work here */
+				
+				while (instSet[i] != NULL && strncmp( l->this.value, instSet[i]->name, sizeof( instSet[i]->name) )) {
+					
+					i++;
+				}
+				
+				WARNING_MSG("Match ! IS = %s and input = %s", instSet[i]->name, l->this.value);
+				
+				
+				
+				
+			
+			
+			
+			
+			
+			}
+			
+			in = read_line( in );
+			l = read_lex( in ); /* We read the next lexeme */
+			
+			
+			/* The type of instruction permit to verify the arguments */ 
+			
+			if (instSet[i]->type == R) {
+				
+			}
+			else if ( instSet[i]->type == I ) {
+			}
+			else {
+			}
+			
+			
+			
+		}
+	}
+	else {
+		ERROR_MSG("Critical error, size of int is not 4 bytes. Please contact us if you want an upgrade.");
+	}
+
+	return result;
+
+}
 
 
 
