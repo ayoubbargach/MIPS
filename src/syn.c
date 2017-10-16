@@ -195,10 +195,37 @@ int decodeInstruction( chain ch, inst * instSet ) {
 			
 			if (instSet[i]->type == R) {
 				
+				
+				
+				
+				if ( atoi(&instSet[i]->operand[0]) ){
+				}
+				
+				if ( atoi(&instSet[i]->operand[1]) ){
+				}
+				
+				if ( atoi(&instSet[i]->operand[2]) ){
+				}
+				
+				if ( atoi(&instSet[i]->operand[3]) ){
+				}
 			}
 			else if ( instSet[i]->type == I ) {
+			
+			
+				if ( atoi(&instSet[i]->operand[0]) ){
+				}
+				
+				if ( atoi(&instSet[i]->operand[1]) ){
+				}
+				
+				if ( atoi(&instSet[i]->operand[2]) ){
+				}
+				
 			}
 			else {
+				if ( atoi(&instSet[i]->operand[0]) ){
+				}
 			}
 			
 			
@@ -206,7 +233,7 @@ int decodeInstruction( chain ch, inst * instSet ) {
 		}
 	}
 	else {
-		ERROR_MSG("Critical error, size of int is not 4 bytes. Please contact us if you want an upgrade.");
+		ERROR_MSG("Critical error, size of int is not 4 bytes.");
 	}
 
 	return result;

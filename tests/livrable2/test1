@@ -1,1 +1,1 @@
-BEQ $t0 , $t1 , byebye
+ADD $t0 , $t1 , byebye
