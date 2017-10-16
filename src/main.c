@@ -80,11 +80,11 @@ int main ( int argc, char *argv[] ) {
     
     lex_load_file( file, &nlines, ch );
     
-    /* Table : */
+    /* Generate the instruction set tab */
 
-	inst tab[1000];
-	
-    instructionSet(tab);
+	inst instSet[1000];
+    instructionSet(instSet);
+    
     /* We use this collection for the syntactic analysis */
     
     DEBUG_MSG("source code got %d lines",nlines);

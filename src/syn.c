@@ -80,7 +80,6 @@ void instructionSet( inst * tab ) {
             /* Add instruction to the table */
             
             tab[j]= makeInst( result[0], result[1], result[2], result[3], result[4]);
-
             j++;
             
             /*
@@ -94,7 +93,13 @@ void instructionSet( inst * tab ) {
 		
 	
 	}
-	WARNING_MSG("Result : %s", tab[0]->name);
+	
+	/* TEST CODE
+	
+	for (i=0;i<20;i++) {
+		WARNING_MSG("The result is %s -> Op %s at %p", tab[i]->name, tab[i]->op, tab[i] );
+	} */
+	
 	
 }
 
@@ -112,12 +117,14 @@ void instructionSet( inst * tab ) {
 
 inst makeInst( char* name, char* op, char* type, char* operand, char* special ) {
 	inst ins = malloc( sizeof( *ins ) );
-	
-	ins->name = name;
-	ins->op = op;
+
+	/* strncpy copy the string arguments in the structure, you can't do that with a simple "=" ! */
+	strncpy ( ins->name, name, sizeof(ins->name) );
+	strncpy ( ins->op, op, sizeof(ins->op) );
 	ins->type = atoi( type );
-	ins->operand = operand;
-	ins->special = special;
+	strncpy ( ins->operand, operand, sizeof(ins->operand) );
+	strncpy ( ins->special, special, sizeof(ins->special) );
+
 	
 	return ins;
 }

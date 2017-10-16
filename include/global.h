@@ -105,15 +105,15 @@ enum {R, I, J};
 /* Instruction structure as is use in the instruction set */
 
 typedef struct inst_t {
-	char * name;
-	char * op;
+	char name[16];
+	char op[16];
 	int type;
 	
 	/* Give indication about the waited operands in binary 
 	   For example : In R-type, 1010 if $rd and $rt in waited. */
 	   
-	char* operand;
-	char* special;
+	char operand[8];
+	char special[STRLEN];
 } *inst;
 
 /*!
