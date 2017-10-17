@@ -154,7 +154,10 @@ inst makeInst( char* name, char* op, char* type, char* operand, char* special ) 
 
 int decodeInstruction( chain ch, inst * instSet ) {
 	
-	int result = 0, i = 0;
+	int i = 0;
+	char code[33];
+	code[32] = '\0';
+	
 	/* We start by verifying the size of int */
 	if ( sizeof( int ) == 4 ) {
 	
@@ -187,44 +190,146 @@ int decodeInstruction( chain ch, inst * instSet ) {
 			
 			}
 			
-			in = read_line( in );
-			l = read_lex( in ); /* We read the next lexeme */
 			
 			
-			/* The type of instruction permit to verify the arguments */ 
+			/* The type of instruction permit to verify the arguments */
 			
 			if (instSet[i]->type == R) {
 				
+				/* Operand init */
+				char * zero = "00000";
 				
+				strncpy( code, "000000", 6);
 				
+				/* /!\ Verification of operands is done there /!\ */
 				
-				if ( atoi(&instSet[i]->operand[0]) ){
-				}
-				
-				if ( atoi(&instSet[i]->operand[1]) ){
-				}
-				
+				/* rd */
 				if ( atoi(&instSet[i]->operand[2]) ){
+				
+					in = read_line( in );
+					l = read_lex( in ); 
+					
+					strncpy(code + 16, registerToBinary(l->this.value), 5);
+					
+				}
+				else {
+					strncpy(code + 16, zero, 5);
 				}
 				
-				if ( atoi(&instSet[i]->operand[3]) ){
+				/* rs */
+				if ( atoi(&instSet[i]->operand[0]) ){
+				
+					in = read_line( in );
+					l = read_lex( in ); 
+					
+					strncpy( code + 6, registerToBinary(l->this.value), 5);
 				}
+				else {
+					strncpy(code + 6, zero, 5);
+				}
+				
+				
+				
+				
+				/* rt */
+				if ( atoi(&instSet[i]->operand[1]) ){
+				
+					in = read_line( in );
+					l = read_lex( in ); 
+					
+					strncpy(code + 11, registerToBinary(l->this.value), 5);
+				}
+				else {
+					strncpy(code + 11, zero, 5);
+				}
+				
+				
+				
+				
+				
+				/* sa */
+				if ( atoi(&instSet[i]->operand[3]) ){
+				
+					in = read_line( in );
+					l = read_lex( in ); 
+					
+					strncpy(code + 21, registerToBinary(l->this.value), 5);
+				}
+				else {
+					strncpy( code + 21, zero, 5);
+				}
+				
+				/* Finally, we add the operation code */
+				
+				strncpy( code + 26,  instSet[i]->op,  6);
+				
+				/* Conversion string -> int, and me return int */
+				
+				
 			}
 			else if ( instSet[i]->type == I ) {
 			
-			
-				if ( atoi(&instSet[i]->operand[0]) ){
-				}
+				char * zero = "00000";
 				
+				strncpy( code, instSet[i]->op,  6);
+				
+				/* rt */
 				if ( atoi(&instSet[i]->operand[1]) ){
+				
+					in = read_line( in );
+					l = read_lex( in ); 
+					
+					strncpy(code + 11, registerToBinary(l->this.value), 5);
+				}
+				else {
+					strncpy(code + 11, zero, 5);
 				}
 				
+				
+				
+				
+				
+				/* rs */
+				if ( atoi(&instSet[i]->operand[0]) ){
+				
+					in = read_line( in );
+					l = read_lex( in ); 
+					
+					strncpy(code + 6, registerToBinary(l->this.value), 5);
+				}
+				else {
+					strncpy(code + 6, zero, 5);
+				}
+				
+				
+			
+				
+				
+				
+				
+				/* offset */
 				if ( atoi(&instSet[i]->operand[2]) ){
+				
+					in = read_line( in );
+					l = read_lex( in ); 
+					
+					strncpy(code + 16, registerToBinary(l->this.value), 16);
+				}
+				else {
+					strncpy(code + 16, zero, 16);
 				}
 				
 			}
-			else {
+			else if ( instSet[i]->type == J ) {
+			
+				strncpy( code, instSet[i]->op, 6);
+				
 				if ( atoi(&instSet[i]->operand[0]) ){
+					
+					in = read_line( in );
+					l = read_lex( in ); 
+					
+					strncpy(code + 6, registerToBinary(l->this.value), 26);
 				}
 			}
 			
@@ -235,13 +340,39 @@ int decodeInstruction( chain ch, inst * instSet ) {
 	else {
 		ERROR_MSG("Critical error, size of int is not 4 bytes.");
 	}
-
-	return result;
+	
+	
+	/* Conversion string -> int, and we return int */
+	WARNING_MSG("%s", code);
+	
+	return (int) strtol(code, NULL, 2);
 
 }
 
 
+/**
+ * @return A translated string of register name
+ * @brief this routine convert a char of a specified register to his binary equivalent.
+ *
+ */
 
+char* registerToBinary( char *input ) {
+
+	char * reg = malloc( sizeof(char) * 6);
+	int t, i;
+	reg[5]='\0';
+	t = (atoi ( input+1) );
+	
+	if ( t <32 ) {
+		for ( i=0; i<5; i++) {
+			reg[4-i] = t % 2 +'0';
+			t = t >> 1;
+		}
+	}
+	
+	return reg;
+	
+}
 
 
 

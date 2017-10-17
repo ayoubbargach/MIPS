@@ -1,1 +1,1 @@
-ADD $t0 , $t1 , byebye
+ADD $0 , $2 , $3

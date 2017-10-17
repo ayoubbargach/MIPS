@@ -24,5 +24,7 @@ int decodeDirective( chain );
 
 void addSymbol( chain, chain );
 
+char* registerToBinary( char * );
+
 
 #endif /* _SYN_H_ */

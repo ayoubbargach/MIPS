@@ -88,6 +88,8 @@ int main ( int argc, char *argv[] ) {
     int test;
     test = decodeInstruction( ch, instSet );
     
+    WARNING_MSG("%d",test);
+    
     
     /* We use this collection for the syntactic analysis */
     
