@@ -19,12 +19,14 @@
 void instructionSet( inst* );
 inst makeInst( char*, char*, char*, char*, char*  );
 
-int decodeInstruction( chain, inst *);
-int decodeDirective( chain );
-
-void addSymbol( chain, chain );
+unsigned int decodeInstruction( chain, inst *);
+unsigned int decodeDirective( chain );
 
 char* registerToBinary( char * );
+
+void fetch( chain, chain, chain, int*, int*, inst *  ); 
+
+void addSymbol( int, int, chain, chain );
 
 
 #endif /* _SYN_H_ */

@@ -91,7 +91,7 @@ void lex_read_line( char *line, int nline, chain newline) {
 	/* Useful when a token is defined as a comment, all the following tokens are also undertood in the same way */
 	int comment = 0;
 	
-	/* After standirising, we only need ' ' as sep */
+	/* After standrising, we only need ' ' as sep */
     char *seps = " ";
     char *token = NULL;
     char save[STRLEN];
@@ -188,6 +188,8 @@ void lex_read_line( char *line, int nline, chain newline) {
         
         /* We use the final value of state to determine the lexeme 
         DEBUG_MSG("[%s] %s", state_to_string(state), token); */
+        
+
         
         /* /!\ The comma and comments are not added to the collection (skip if) /!\ */
         
@@ -394,9 +396,6 @@ void lex_standardise( char* in, char* out ) {
     WARNING_MSG("%s", in);
     WARNING_MSG("%s", out); */
 }
-
-
-
 
 
 

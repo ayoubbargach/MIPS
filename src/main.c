@@ -86,7 +86,7 @@ int main ( int argc, char *argv[] ) {
     instructionSet(instSet);
     
     int test;
-    test = decodeInstruction( ch, instSet );
+    test = decodeInstruction( read_line( ch ), instSet );
     
     WARNING_MSG("%d",test);
     

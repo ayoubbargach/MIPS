@@ -152,7 +152,7 @@ inst makeInst( char* name, char* op, char* type, char* operand, char* special ) 
  
 /* /!\ int is a 4 bytes type. But if you run this code in an ARM 16 bits for instance (Thumb mode), int will be coded in 2 bytes only ! The assembly will failure /!\ */
 
-int decodeInstruction( chain ch, inst * instSet ) {
+unsigned int decodeInstruction( chain ch, inst * instSet ) {
 	
 	int i = 0;
 	char code[33];
@@ -165,7 +165,7 @@ int decodeInstruction( chain ch, inst * instSet ) {
 		
 		chain in;
 		lex l;
-		in = read_line( ch );
+		in = ch;
 		
 		if (in != NULL) {
 			l = read_lex( in );
@@ -349,6 +349,22 @@ int decodeInstruction( chain ch, inst * instSet ) {
 
 }
 
+/**
+ * @param ch The chain to analyse.
+ * @return int of decoded directive.
+ * @brief this routine decode only seleral directives. All other directives are directly managed by lex.c
+ * In this routine, we manage this directives :
+ * - .word w1, ... wn : put n word in contiguous way.
+ * - .byte b1, ... bn : put n bytes in contiguous way.
+ * - .asciiz s1, ... sn : put n string in contiguous way.
+ */
+ 
+ unsigned int decodeDirective( chain ch ) {
+ 	
+ 	return 0;
+ 
+ }
+
 
 /**
  * @return A translated string of register name
@@ -376,10 +392,67 @@ char* registerToBinary( char *input ) {
 
 
 
+/**
+ * @param ch Chain built by lex.c
+ * @param symTab Last element of the symbol chain.
+ * @param code The code chain. In fact, this is return of this routine.
+ * @param section Pointer on the section, if NULL, no section defined yet.
+ * @param addr Address in this section, if NULL, no section defined yet.
+ * @param instSet Instruction Set if instruction decode is needed.
+ * @return nothing 
+ * @brief This routine is used to fetch and decode if needed the input intruction. 
+ */
+ 
+ void fetch( chain ch, chain symTab, chain code, int * section, int * addr, inst * instSet ) {
+ 	chain element = ch;
+ 	lex l;
+ 	
+ 	/* We read the line */
+ 	element = read_line( element );
+ 	l = read_lex( element );
+ 	
+ 	/* If line is not empty */
+ 	
+ 	if ( l != NULL ) {
+ 	
+	 	if (  l->type == DIRECTIVE ) {
+	 		if ( strncmp( l->this.value + 1, "text", 4 ) ) {
+	 		}
+	 		else if ( strncmp( l->this.value + 1, "data", 4 ) ) {
+	 		}
+	 		else if ( strncmp( l->this.value + 1, "bss", 3 ) ) {
+	 		}
+	 		else if ( strncmp( l->this.value + 1, "set", 3 ) ) {
+	 		}
+	 		else {
+	 			/* In other cases, launch decodeDirective */
+	 		}
+	 		
+	 	}
+	 	else if ( l->type == LABEL ) {
+	 		/* Here, it is a label, we add it the symTab without forgetting some verifications ;). After that we launch fetch again to treat rest of the chain */
+	 	}
+	 	else {
+	 		
+	 	}
+	}
+	return;
+ 	
+ }
+ 
 
 
 
+/**
+ * @param 
+ * @param 
+ * @return nothing
+ * @brief Add the symbol to the table of symbols.
+ */
 
+void addSymbol( int section, int address,  chain ch, chain symTab ) {
+	
+}
 
 
 
