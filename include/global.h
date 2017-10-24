@@ -116,6 +116,17 @@ typedef struct inst_t {
 	char special[STRLEN];
 } *inst;
 
+/* Symbol contained in symTab */
+typedef struct symbol_t {
+	unsigned int line;
+	
+	int section;
+	unsigned int addr;
+	
+	char value[STRLEN];
+	
+} *symbol;
+
 /*!
   \brief INTERNALS: Type definition of chain. To understand the signification of next / bottom, please read the documentation graphs.
  */
@@ -127,6 +138,7 @@ typedef struct chain_t {
 		struct chain_t *bottom;
 		lex bottom_lex;
 		inst bottom_ins;
+		symbol sym;
 	}this;
 } *chain;
 

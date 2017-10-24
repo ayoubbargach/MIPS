@@ -403,7 +403,7 @@ char* registerToBinary( char *input ) {
  * @brief This routine is used to fetch and decode if needed the input intruction. 
  */
  
- void fetch( chain ch, chain symTab, chain code, int * section, int * addr, inst * instSet ) {
+ void fetch( chain ch, chain symTab, chain code, int * section, unsigned int * addr, inst * instSet ) {
  	chain element = ch;
  	lex l;
  	
@@ -417,22 +417,36 @@ char* registerToBinary( char *input ) {
  	
 	 	if (  l->type == DIRECTIVE ) {
 	 		if ( strncmp( l->this.value + 1, "text", 4 ) ) {
+	 			*section = TEXT;
+	 			*addr = 0;
+	 			WARNING_MSG("Here");
 	 		}
 	 		else if ( strncmp( l->this.value + 1, "data", 4 ) ) {
+	 			*section = DATA;
+	 			*addr = 0;
 	 		}
 	 		else if ( strncmp( l->this.value + 1, "bss", 3 ) ) {
+	 			*section = BSS;
+	 			*addr = 0;
 	 		}
 	 		else if ( strncmp( l->this.value + 1, "set", 3 ) ) {
+	 			/* We ignore this directive for the moment, it will be used once optimisation has been coded */
+	 			
 	 		}
 	 		else {
-	 			/* In other cases, launch decodeDirective */
+	 			/* In other cases, launch decodeDirective and we increase the addr */
+	 			
 	 		}
 	 		
 	 	}
 	 	else if ( l->type == LABEL ) {
 	 		/* Here, it is a label, we add it the symTab without forgetting some verifications ;). After that we launch fetch again to treat rest of the chain */
+	 		
+	 		addSymbol( l->this.value , symTab, *section, *addr );
+	 		fetch( read_line( element ), symTab, code, section, addr, instSet );
 	 	}
 	 	else {
+	 		/* The list is not empty, we are in the case of instruction */
 	 		
 	 	}
 	}
@@ -444,15 +458,113 @@ char* registerToBinary( char *input ) {
 
 
 /**
- * @param 
- * @param 
+ * @param value String value of symbol
+ * @param symTab Table to complete
+ * @param section Section identified
+ * @param addr Address in section
  * @return nothing
- * @brief Add the symbol to the table of symbols.
+ * @brief Add the symbol to the table of symbols. Two path for resolution :
+ * - if section 
  */
 
-void addSymbol( int section, int address,  chain ch, chain symTab ) {
+void addSymbol( char * value, chain symTab, int section, unsigned int addr ) {
+	chain element = symTab;
+	symbol temp;
+	int match = 0;
 	
+	if ( section != UNDEFINED ) { /* In case of no section/addr filled, we just add the symbol to the tab */
+		while ( read_line( element ) != NULL && element->this.sym != NULL && !match ) {
+			temp = readSymbol( element );
+			if ( strcmp( temp->value, value ) ) {
+				match = 1;
+			}
+			element = read_line( element );
+		}
+		
+		/* If we have a match we update the symbol : */
+		if (match) {
+			temp->section = section;
+			temp->addr = addr;
+		}
+		else {
+		
+			/* Create a new element of the chain and add the symbol */
+			element = add_chain_next( element );
+			element->this.sym = createSymbol( value, section, addr );
+		}
+	}
+	else {
+		while ( read_line( element ) != NULL && element->this.sym != NULL && !match ) {
+			temp = readSymbol( element );
+			if ( strcmp( temp->value, value ) ) {
+				match = 1;
+			}
+			element = read_line( element );
+		}
+		
+		/* If we have a match, nothing to do */
+		if (!match) {
+		
+			/* Create a new element of the chain and add the symbol */
+			element = add_chain_next( element );
+			element->this.sym = createSymbol( value, section, addr );
+		}
+		
+	}
 }
+
+/**
+ * @param value String value of symbol
+ * @param symTab Table of symbols
+ * @return the symbol if found, NULL if not.
+ * @brief Find a symbol. Usefull when an operand is decoded for instance.
+ */
+
+symbol findSymbol( char * value, chain symTab ) {
+	chain element = symTab;
+	symbol temp;
+	
+	do {
+		temp = readSymbol( element );
+		if ( temp != NULL && strncmp( temp->value, value, strlen(value) ) ) {
+			return temp;
+		}
+	} while ( (element = read_line( element )) != NULL );
+	
+	return NULL;
+}
+
+/**
+ * @param symTab Element of symTab.
+ * @return readed symbol, NULL if nothing to read.
+ * @brief Read a symbol from a chain element.
+ */
+
+symbol readSymbol( chain symElem ) {
+	if ( symElem->this.sym != NULL ) {
+		return symElem->this.sym;
+	}
+	return NULL;
+}
+
+/**
+ * @param section Symbol section, if UNDEFINED, symbol not defined.
+ * @param addr If section defined, this value have a meaning.
+ * @param value Symbol value
+ * @return symbol.
+ * @brief Create a symbol.
+ */
+
+symbol createSymbol(char * value,  int section, unsigned int addr ) {
+	symbol sym = malloc ( sizeof( symbol ) );
+	
+	strcpy(sym->value , value);
+	sym->section = section;
+	sym->addr = addr;
+	
+	return sym;
+}
+
 
 
 

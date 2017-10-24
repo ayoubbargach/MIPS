@@ -24,9 +24,15 @@ unsigned int decodeDirective( chain );
 
 char* registerToBinary( char * );
 
-void fetch( chain, chain, chain, int*, int*, inst *  ); 
+/* enum sections */
+enum {UNDEFINED, TEXT, DATA, BSS};
 
-void addSymbol( int, int, chain, chain );
+void fetch( chain, chain, chain, int*, unsigned int*, inst *  ); 
+
+void addSymbol( char * , chain, int  , unsigned int  );
+symbol findSymbol( char * , chain);
+symbol readSymbol( chain );
+symbol createSymbol(char * ,  int, unsigned int );
 
 
 #endif /* _SYN_H_ */
