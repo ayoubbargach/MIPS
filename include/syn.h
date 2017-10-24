@@ -20,7 +20,7 @@ void instructionSet( inst* );
 inst makeInst( char*, char*, char*, char*, char*  );
 
 unsigned int decodeInstruction( chain, inst *);
-unsigned int decodeDirective( chain, unsigned int );
+void decodeDirective( chain, char * );
 
 char* registerToBinary( char * );
 

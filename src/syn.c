@@ -351,18 +351,65 @@ unsigned int decodeInstruction( chain ch, inst * instSet ) {
 
 /**
  * @param ch The chain to analyse.
- * @param byte In which byte we are.
- * @return int of decoded directive.
+ * @param tab a char array used to load code byte by byte.
+ * @return nothing.
  * @brief this routine decode only seleral directives. All other directives are directly managed by lex.c
  * In this routine, we manage this directives :
  * - .word w1, ... wn : put n word in contiguous way.
  * - .byte b1, ... bn : put n bytes in contiguous way.
  * - .asciiz s1, ... sn : put n string in contiguous way.
+ * - .space n : put n bytes initalized to 0.
  */
  
- unsigned int decodeDirective( chain ch, unsigned int byte ) {
+void decodeDirective( chain ch, char * tab ) {
+	chain directive = ch;
+	int i = 0 ;
+	
+	lex l = read_lex( directive );
+	
+	if ( strcmp( l->this.value + 1, "word" ) ) {
+		directive = read_line( directive );
+		
+		while (directive != NULL) { /* If the chain is well built, it is not mandatory to verify if lex is NULL */
+			l = read_lex( directive );
+			directive = read_line( directive );
+		}
+	}
+	else if ( strcmp( l->this.value + 1, "byte" ) ) {
+		directive = read_line( directive );
+		
+		while (directive != NULL) { /* If the chain is well built, it is not mandatory to verify if lex is NULL */
+			l = read_lex( directive );
+			directive = read_line( directive );
+		}
+	}
+	else if ( strcmp( l->this.value + 1, "asciiz" ) ) {
+		directive = read_line( directive );
+		
+		while (directive != NULL) { /* If the chain is well built, it is not mandatory to verify if lex is NULL */
+			l = read_lex( directive );
+			directive = read_line( directive );
+		}
+	}
+	else if ( strcmp( l->this.value + 1, "space" ) ) {
+		directive = read_line( directive );
+		
+		if (directive != NULL) { /* If the chain is well built, it is not mandatory to verify if lex is NULL */
+			l = read_lex( directive );
+			
+			int n = l->this.digit.this.integer; /* Number of uninitialized bytes */
+			for (i=0; i<n; i++) {
+				tab[i] = 0;
+			}
+		}
+	}
+	else {
+		/* TODO raise an error */
+	}
+	
  	
- 	return 0;
+ 	/* In the end we add the char '\0' */
+ 	return;
  
  }
 
@@ -438,9 +485,13 @@ char* registerToBinary( char *input ) {
 	 			/* In other cases, launch decodeDirective and we increase the addr */
 	 			
 	 			/* We make an evaluation of directive. Indeed, the code may be larger than a word. In case of an instruction we have a word, the directive in more likely saved in a byte, i.e. a char */
-	 			unsigned int byte = 1;
-	 			while ( byte != 0 ) {
-		 			addCode( chCode, 0, *addr, decodeDirective( element, byte ));
+	 			unsigned int byte = 0;
+	 			
+	 			char result[STRLEN];
+	 			decodeDirective( element, result );
+	 			
+	 			while ( byte < strlen(result) ) {
+		 			addCode( chCode, 0, *addr, result[byte]);
 		 			*addr = *addr + 1; /* Address is incremented byte by byte */
 		 		}
 	 			
