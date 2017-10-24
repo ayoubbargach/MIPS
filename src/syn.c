@@ -435,6 +435,7 @@ char* registerToBinary( char *input ) {
 	 		}
 	 		else {
 	 			/* In other cases, launch decodeDirective and we increase the addr */
+	 			*addr = *addr + 1;
 	 			
 	 		}
 	 		
@@ -442,11 +443,18 @@ char* registerToBinary( char *input ) {
 	 	else if ( l->type == LABEL ) {
 	 		/* Here, it is a label, we add it the symTab without forgetting some verifications ;). After that we launch fetch again to treat rest of the chain */
 	 		
-	 		addSymbol( l->this.value , symTab, *section, *addr );
-	 		fetch( read_line( element ), symTab, code, section, addr, instSet );
+		 	addSymbol( l->this.value , symTab, *section, *addr );
+		 	
+	 		if (read_line( element ) != NULL ) {
+		 		*addr = *addr + 1;
+		 		fetch( read_line( element ), symTab, code, section, addr, instSet );
+		 	}
+		 	
 	 	}
 	 	else {
 	 		/* The list is not empty, we are in the case of instruction */
+	 		
+	 		
 	 		
 	 	}
 	}
@@ -464,7 +472,8 @@ char* registerToBinary( char *input ) {
  * @param addr Address in section
  * @return nothing
  * @brief Add the symbol to the table of symbols. Two path for resolution :
- * - if section 
+ * - if section is not defined, just add
+ * - if section defined, add section and addr 
  */
 
 void addSymbol( char * value, chain symTab, int section, unsigned int addr ) {
@@ -564,6 +573,26 @@ symbol createSymbol(char * value,  int section, unsigned int addr ) {
 	
 	return sym;
 }
+
+
+/**
+ * @param line The line of the code. Can be used to final display. (Is like an ID)
+ * @param addr Mandatory, the address of the code regarding to the section
+ * @param value Unsigned int to store the code
+ * @return a code.
+ * @brief Create a code container
+ */
+
+code createCode(unsigned int line, unsigned int addr, unsigned int value ) {
+	code c = malloc ( sizeof( code ) );
+	
+	c->line = line;
+	c->addr = addr;
+	c->value = value;
+	
+	return c;
+}
+
 
 
 

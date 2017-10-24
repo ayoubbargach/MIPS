@@ -146,12 +146,14 @@ typedef struct chain_t {
 /* After decode, used to struture the chain list in order to build the binary code. */
 
 typedef struct code_t {
-	chain origin;
+	unsigned int line;
 	
-	/* Decoded code in hexa */
-	char * s;
+	unsigned int addr;
 	
-} code;
+	/* Decoded code */
+	unsigned int value;
+	
+}* code;
 
 
 #endif /* _GLOBAL_H */

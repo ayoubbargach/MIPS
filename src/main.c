@@ -85,10 +85,15 @@ int main ( int argc, char *argv[] ) {
 	inst instSet[1000];
     instructionSet(instSet);
     
-    int test;
-    test = decodeInstruction( read_line( ch ), instSet );
+    /* We make the symTab collection */
+    chain symTab = make_collection();
     
-    WARNING_MSG("%d",test);
+    /* Some basic variables */
+    int section = UNDEFINED;
+    unsigned int addr = 0;
+    
+    
+    
     
     
     /* We use this collection for the syntactic analysis */
