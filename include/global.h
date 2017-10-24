@@ -127,6 +127,18 @@ typedef struct symbol_t {
 	
 } *symbol;
 
+/* After decode, used to struture the chain list in order to build the binary code. */
+
+typedef struct code_t {
+	unsigned int line;
+	
+	unsigned int addr;
+	
+	/* Decoded code */
+	unsigned int value;
+	
+}* code;
+
 /*!
   \brief INTERNALS: Type definition of chain. To understand the signification of next / bottom, please read the documentation graphs.
  */
@@ -139,21 +151,10 @@ typedef struct chain_t {
 		lex bottom_lex;
 		inst bottom_ins;
 		symbol sym;
+		code c;
 	}this;
 } *chain;
 
-
-/* After decode, used to struture the chain list in order to build the binary code. */
-
-typedef struct code_t {
-	unsigned int line;
-	
-	unsigned int addr;
-	
-	/* Decoded code */
-	unsigned int value;
-	
-}* code;
 
 
 #endif /* _GLOBAL_H */

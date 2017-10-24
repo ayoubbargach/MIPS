@@ -20,7 +20,7 @@ void instructionSet( inst* );
 inst makeInst( char*, char*, char*, char*, char*  );
 
 unsigned int decodeInstruction( chain, inst *);
-unsigned int decodeDirective( chain );
+unsigned int decodeDirective( chain, unsigned int );
 
 char* registerToBinary( char * );
 
@@ -33,6 +33,9 @@ void addSymbol( char * , chain, int  , unsigned int  );
 symbol findSymbol( char * , chain);
 symbol readSymbol( chain );
 symbol createSymbol(char * ,  int, unsigned int );
+
+code createCode(unsigned int, unsigned int, unsigned int );
+void addCode( chain, unsigned int, unsigned int, unsigned int  );
 
 
 #endif /* _SYN_H_ */

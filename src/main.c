@@ -92,6 +92,10 @@ int main ( int argc, char *argv[] ) {
     int section = UNDEFINED;
     unsigned int addr = 0;
     
+    /* We make the code collection */
+    chain chCode = make_collection();
+    chain c = chCode;
+    
     
     
     

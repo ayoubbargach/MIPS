@@ -351,6 +351,7 @@ unsigned int decodeInstruction( chain ch, inst * instSet ) {
 
 /**
  * @param ch The chain to analyse.
+ * @param byte In which byte we are.
  * @return int of decoded directive.
  * @brief this routine decode only seleral directives. All other directives are directly managed by lex.c
  * In this routine, we manage this directives :
@@ -359,7 +360,7 @@ unsigned int decodeInstruction( chain ch, inst * instSet ) {
  * - .asciiz s1, ... sn : put n string in contiguous way.
  */
  
- unsigned int decodeDirective( chain ch ) {
+ unsigned int decodeDirective( chain ch, unsigned int byte ) {
  	
  	return 0;
  
@@ -403,7 +404,7 @@ char* registerToBinary( char *input ) {
  * @brief This routine is used to fetch and decode if needed the input intruction. 
  */
  
- void fetch( chain ch, chain symTab, chain code, int * section, unsigned int * addr, inst * instSet ) {
+ void fetch( chain ch, chain symTab, chain chCode, int * section, unsigned int * addr, inst * instSet ) {
  	chain element = ch;
  	lex l;
  	
@@ -435,7 +436,13 @@ char* registerToBinary( char *input ) {
 	 		}
 	 		else {
 	 			/* In other cases, launch decodeDirective and we increase the addr */
-	 			*addr = *addr + 1;
+	 			
+	 			/* We make an evaluation of directive. Indeed, the code may be larger than a word. In case of an instruction we have a word, the directive in more likely saved in a byte, i.e. a char */
+	 			unsigned int byte = 1;
+	 			while ( byte != 0 ) {
+		 			addCode( chCode, 0, *addr, decodeDirective( element, byte ));
+		 			*addr = *addr + 1; /* Address is incremented byte by byte */
+		 		}
 	 			
 	 		}
 	 		
@@ -446,15 +453,16 @@ char* registerToBinary( char *input ) {
 		 	addSymbol( l->this.value , symTab, *section, *addr );
 		 	
 	 		if (read_line( element ) != NULL ) {
-		 		*addr = *addr + 1;
-		 		fetch( read_line( element ), symTab, code, section, addr, instSet );
+		 		fetch( read_line( element ), symTab, chCode, section, addr, instSet );
+		 		*addr = *addr + 4;
 		 	}
 		 	
 	 	}
 	 	else {
 	 		/* The list is not empty, we are in the case of instruction */
 	 		
-	 		
+	 		/* Add an element to code */
+	 		addCode( chCode, 0, *addr, decodeInstruction( element, instSet ) );
 	 		
 	 	}
 	}
@@ -591,6 +599,22 @@ code createCode(unsigned int line, unsigned int addr, unsigned int value ) {
 	c->value = value;
 	
 	return c;
+}
+
+/**
+ * @param line The line of the code. Can be used to final display. (Is like an ID)
+ * @param addr Mandatory, the address of the code regarding to the section
+ * @param value Unsigned int to store the code
+ * @return a code.
+ * @brief Add the code to the chain.
+ */
+
+void addCode( chain chCode, unsigned int line, unsigned int addr, unsigned int value  ) {
+	/* We add a new element in the chain code */
+	chCode = add_chain_next( chCode );
+	
+	chCode->this.c = createCode(line, addr, value);
+	return;
 }
 
 
