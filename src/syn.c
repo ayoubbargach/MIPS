@@ -388,6 +388,11 @@ void decodeDirective( chain ch, char * tab ) {
 		
 		while (directive != NULL) { /* If the chain is well built, it is not mandatory to verify if lex is NULL */
 			l = read_lex( directive );
+			
+			/* Here we add each string and we finish it by a char '\0', after that we translate using variable i */
+			strcpy( tab + i , l->this.value);
+			i = i + strlen( tab + i );
+			
 			directive = read_line( directive );
 		}
 	}
