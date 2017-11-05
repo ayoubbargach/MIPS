@@ -65,29 +65,32 @@
 #define FAILURE          1
 
 /*!
-  \brief INTERNALS: Definition of some state for our FSM. EXIT is managed the same way as COMMENT : We do not consider it. ( ',' for example)
+  \brief All enum definitions. Definition of states for our FSM.
  */
 
-enum {INIT, DECIMAL_ZERO, DECIMAL, OCTO, HEXA, SYMBOL, COMMENT, REGISTER, DIRECTIVE, COMMA, LABEL, ERROR};
+enum {INIT, DECIMAL_ZERO, DECIMAL, OCTO, HEXA, SYMBOL, COMMENT, REGISTER, DIRECTIVE, PUNCTUATION, LABEL, ERROR};
 
+enum {UNSIGNED, SIGNED};
 
+enum {R, I, IB, J};
 
 /*!
-  \brief INTERNALS: Type definition of digit.
+  \brief Type definition of digit.
  */
  
 typedef struct digit_t {
 	unsigned int type;
+	int sign;
 	
 	union {
 		int integer;
 		int octo;
 		char * hexa;
 	}this;
-} digit;
+}* digit;
 
 /*!
-  \brief INTERNALS: Type definition of lex.
+  \brief Type definition of lex.
  */
  
 typedef struct lexeme_t {
@@ -99,8 +102,6 @@ typedef struct lexeme_t {
 	}this;
 } *lex;
 
-/* All types of instructions */
-enum {R, I, J};
 
 /* Instruction structure as is use in the instruction set */
 
@@ -144,6 +145,10 @@ typedef struct code_t {
  */
  
 typedef struct chain_t {
+	
+	/* Start at 1. If 0, not defined */
+	unsigned int line;
+	
 	struct chain_t *next;
 	
 	union {
@@ -155,7 +160,11 @@ typedef struct chain_t {
 	}this;
 } *chain;
 
+/*!
+  \brief INTERNALS: A global variable is declared in all files. This variable is used to manage tests. It is defined in top of main.
+ */
 
+extern int testID;
 
 #endif /* _GLOBAL_H */
 

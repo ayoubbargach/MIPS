@@ -20,62 +20,6 @@
 #include <functions.h>
 
 /**
- * @param state The state enum (FSM).
- * @return should return a string with the same name as enum case.
- * @brief This function is useful for debug trace only.
- *
- */
- 
-char* state_to_string(int state) {
-	switch (state) {
-    		case COMMENT :
-    			return "COMMENT";
-    			break;
-    		
-    		case DECIMAL_ZERO :
-    			return "DECIMAL_ZERO";
-    			break;
-    		
-    		case DECIMAL :
-    			return "DECIMAL";
-				break;  
-				      			
-    		case OCTO:
-    			return "OCTO";
-				break; 
-				      			
-    		case HEXA:
-    			return "HEXA";
-				break;
-				     			
-    		case DIRECTIVE:
-    			return "DIRECTIVE";
-				break; 
-				     			
-    		case REGISTER:
-    			return "REGISTER";
-				break; 
-				     			
-    		case SYMBOL:
-    			return "SYMBOL";
-				break;
-				
-			case COMMA:
-    			return "COMMA";
-				break; 
-			
-			case LABEL:
-    			return "LABEL";
-				break; 
-				     			
-    		default :
-    			return "ERROR";
-				break;
-	}
-}
-
-
-/**
  * @param line String of the line of source code to be analysed.
  * @param nline the line number in the source code.
  * @return should return the collection of lexemes that represent the input line of source code.
@@ -85,13 +29,16 @@ char* state_to_string(int state) {
 void lex_read_line( char *line, int nline, chain newline) {
 
 	int i;
-	chain element = add_chain_next( newline );
+	int sign;
+	
+	/* We first use newline as an initial affectation */
+	chain element = add_chain_next( newline, nline );
 
 	
-	/* Useful when a token is defined as a comment, all the following tokens are also undertood in the same way */
+	/* Useful when a token is defined as a comment, all the following tokens are also undertood as comments */
 	int comment = 0;
 	
-	/* After standrising, we only need ' ' as sep */
+	/* After standarizing, we only need ' ' as sep */
     char *seps = " ";
     char *token = NULL;
     char save[STRLEN];
@@ -105,12 +52,16 @@ void lex_read_line( char *line, int nline, chain newline) {
     	
  		/* Re-initialisation of FSM */
     	int state = INIT;
+    	sign = UNSIGNED;
     	
         for ( i= 0; i< strlen(token); i++ ) {
         	
         	switch (state) {
         		case INIT :
-        			if ( token[i] == '#' || comment != 0) {
+        			if ( token[i] == '-' ) {
+        				sign = SIGNED;
+        			}
+        			else if ( token[i] == '#' || comment) {
         				comment = 1;
         				state = COMMENT;
         			}
@@ -126,8 +77,8 @@ void lex_read_line( char *line, int nline, chain newline) {
         			else if ( token[i] == '$' ) {
         				state = REGISTER;
         			}
-        			else if ( token[i] == ',' ) {
-        				state = COMMA;
+        			else if ( token[i] == ',' || token[i] == '(' || token[i] == ')' ) {
+        				state = PUNCTUATION;
         			}
         			else {
         				state = SYMBOL;
@@ -138,24 +89,28 @@ void lex_read_line( char *line, int nline, chain newline) {
         			break;
         		
         		case DECIMAL_ZERO :
-        			if ( isdigit(token[i]) ) {
-        				if ( token[i] < '8' ) {
-        					state = OCTO;
-        				}
-        				else if ( token[i] == 'x' ) {
-        					state = HEXA;
-        				}
-        				else state = ERROR;
-        			}
+    				if ( token[i] < '8' && token[i] >= '0' ) {
+    					state = OCTO;
+    				}
+    				else if ( token[i] == 'x' ) {
+    					state = HEXA;
+    				}
+    				else if ( token[i] == '8' || token[i] == '9' ) {
+    					state = DECIMAL;
+    				}
+    				else {
+    					/* In all other cases, there is an error. */
+    					state = ERROR;
+    				}
         			
         			break;
         		
         		case DECIMAL :
-					state = (isdigit( token[i] )) ? DECIMAL : ERROR;
+					state = ( isdigit( token[i] ) ) ? DECIMAL : ERROR;
 					break;  
 					      			
         		case OCTO:
-        			state = ( isdigit( token[i] ) || token[i] < '8' ) ? OCTO : ERROR;
+        			state = ( isdigit( token[i] ) && token[i] < '8' ) ? OCTO : ERROR;
 					
 					break; 
 					      			
@@ -165,7 +120,7 @@ void lex_read_line( char *line, int nline, chain newline) {
 					break;
 					
 				
-				/* All other states are managed by default */			
+				/* All other states are managed by default : We do nothing ! */			
         		default :
 					
 					break;
@@ -185,17 +140,20 @@ void lex_read_line( char *line, int nline, chain newline) {
         
         
         
-        
         /* We use the final value of state to determine the lexeme 
         DEBUG_MSG("[%s] %s", state_to_string(state), token); */
         
-
+		/* /!\ If there is any error, we raise it and stop the program /!\ */
+		
+		if ( state == ERROR ) {
+			ERROR_MSG("Lexical error. One of lexemes failed. Example : Be sure that you are not writing an hexa without 0x");
+		}
         
-        /* /!\ The comma and comments are not added to the collection (skip if) /!\ */
+        /* /!\ Punctuations and comments are not added to the collection (skip if) /!\ */
         
-        if ( !( state == COMMENT || state == COMMA || state == INIT ) ) {
+        if ( !( state == COMMENT || state == PUNCTUATION || state == INIT ) ) {
 			/* Create lexeme and add value */
-			lex lexeme = make_lex( state, token );
+			lex lexeme = make_lex( state, token, sign );
 		
 			/* Add lexeme to the element */
 			add_lex(element, lexeme);
@@ -207,10 +165,9 @@ void lex_read_line( char *line, int nline, chain newline) {
 			
 		
 			/* Create a new chain element to store the next lexeme */
-			element = add_chain_next( element );
+			element = add_chain_next( element, nline );
 		}
         
-
     }
 
     return;
@@ -259,35 +216,11 @@ void lex_load_file( char *file, unsigned int *nlines, chain ch ) {
         /* We add a newline in our collection, the condition helps to avoid possible "blank" lines in the collection */
         
         if (read_line( newline ) != NULL) {
-    		newline = add_chain_newline( newline );
+    		newline = add_chain_newline( newline, *nlines );
     	}
     }
     
-    /* TEST code 
     
-    chain chcopy = ch;
-    chain in;
-    
-    WARNING_MSG("%d", (*nlines));
-    
-    while (  chcopy != NULL ) {
-    	in = chcopy;
-    	in = read_line( in );
-    	while ( in != NULL ) {
-    		
-    		
-    		if (read_lex( in ) != NULL ) {
-				WARNING_MSG("%s", state_to_string( read_lex(in)->type ) );
-			}
-			
-    		in = read_line( in );
-    	}
-    	
-    	DEBUG_MSG("[NL]");
-    	chcopy = next_line( chcopy );
-    	
-    }
-    */
 
     fclose(fp);
     return;
@@ -302,14 +235,15 @@ void lex_load_file( char *file, unsigned int *nlines, chain ch ) {
  * @brief This function will prepare a line of source code for further analysis.
  */
 
-/* note that MIPS assembly supports distinctions between lower and upper case*/
+/* Note that MIPS assembly supports distinctions between lower and upper case */
+
 void lex_standardise( char* in, char* out ) {
 
-    unsigned int i, j, k;
+    unsigned int i = 0, j = 0, k = 0;
     
-    k = 0;
-
-    for ( i= 0, j= 0; i< strlen(in); i++ ) {
+	/* Important note : k means that a space should be added. But the decision is taken by the next char. */
+	
+    while ( i < strlen(in) ) {
 
         /* translate all spaces (i.e., tab) into simple spaces, we use k to delete futher spaces */
 		
@@ -317,87 +251,162 @@ void lex_standardise( char* in, char* out ) {
 		    k = 1;
         }
         else{
-        	if (in[i] == ',' )
-        	{
-        		out[j] = ' ';
-        		out[j+1]=in[i];
-        		
-        		
-        		/* If the character after is blank, we do nothing */
-        		
-        		if ( isblank((int) in[i+1]) || i+1 == strlen(in) ) {
-        			j = j + 2;
-        		}
-        		else {
-        		    out[j+2]=' ';
-        			j = j + 3;
-        		}
-        		
-        		k=0;
+        	switch (in[i]) {
+		    	case ',' :
+		    		
+		    		/* Purpose : Have a space before and after comma in all cases */
+		    		 
+		    		out[j] = ' ';
+		    		out[j+1]=in[i];
+		    		j += 2;
+		    		
+		    		k = 1;
+		    	break;
+		    	
+		    	case '#' :
+		    		
+		    		/* Purpose : Have a space before and after # in all cases (Same as comma !) */
+		    		 
+		    		out[j] = ' ';
+		    		out[j+1]=in[i];
+		    		j += 2;
+		    		
+		    		k = 1;
+		    	break;
+		    	
+		    	case ')' :
+		    		
+		    		/* Purpose : Have a space before and after # in all cases (Same as comma !) */
+		    		 
+		    		out[j] = ' ';
+		    		out[j+1]=in[i];
+		    		j += 2;
+		    		
+		    		k = 1;
+		    	break;
+		    	
+		    	case '(' :
+		    		
+		    		/* Purpose : Have a space before and after # in all cases (Same as comma !) */
+		    		 
+		    		out[j] = ' ';
+		    		out[j+1]=in[i];
+		    		j += 2;
+		    		
+		    		k = 1;
+		    	break;
+		    	
+		    	case ':' :
+		    		
+		    		/* Purpose : Have no space before and only one space after */
+		    		
+		    		out[j]=in[i];
+		    		j++;
+		    		
+		    		k = 1;
+		    	break;
+		    	
+		    	case '-' :
+		    		/* Purpose : Have no space after and only one space before */
+		    		
+		    		out[j] = ' ';
+		    		out[j+1]=in[i];
+		    		j += 2;
+		    		
+		    		/* If the character after is blank, we increment i ! If not, we do nothing. */
+		    		
+		    		while ( isblank((int) in[i+1]) || i+1 == strlen(in) ) {
+		    			i++;
+		    		}
+		    		
+		    		k = 0;
+		    		
+		    	break;
+		    	
+		    	default :
+					if (k) {
+						out[j]=' ';
+						out[j+1]=in[i];
+						j = j + 2;
+						k=0;
+					}
+					else {
+						out[j]=in[i];
+						j++;
+					}
+		    	break;
         	}
-        	else if ( in[i] == '#' )
-        	{
-        		/* If we have a space before, we add one. If not, nothing to do. */
-        		if (k) {
-        			out[j]=' ';
-        			j++;
-        		}
-        		
-        		out[j]=in[i];
-        		
-        		
-        		/* If the character after is blank, we do nothing */
-        		
-        		if ( isblank((int) in[i+1]) || i+1 == strlen(in) ) {
-        			j++;
-        		}
-        		else {
-        		    out[j+1]=' ';
-        			j = j + 2;
-        		}
-        		
-        		k=0;
-        	}
-        	else if ( in[i] == ':' )
-        	{
-        		out[j]=in[i];
-        		
-        		
-        		/* If the character after is blank, we do nothing */
-        		
-        		if ( isblank((int) in[i+1]) || i+1 == strlen(in) ) {
-        			j++;
-        		}
-        		else {
-        		    out[j+1]=' ';
-        			j = j + 2;
-        		}
-        		
-        		k=0;
-        	}
-        	else if (k)
-        	{
-        		out[j]=' ';
-        		out[j+1]=in[i];
-        		j = j + 2;
-        		k=0;
-        	}
-        	else {
-		    	out[j]=in[i];
-		    	j++;
-        	}
-        	
         }
+        
+        i++;
 		
     }
     out[j]='\0';
+
+	/* ---- TEST 1 ---- */
+
+    /* To compare in and out : */
     
-    /* To compare in and out :
-    WARNING_MSG("%s", in);
-    WARNING_MSG("%s", out); */
+    if (testID == 1) {
+		WARNING_MSG("Inp : %s", in);
+		WARNING_MSG("Out : %s", out);
+    }
 }
 
-
+/**
+ * @param state The state enum (FSM).
+ * @return should return a string with the same name as enum case.
+ * @brief This function is useful for debug trace only.
+ *
+ */
+ 
+char* state_to_string(int state) {
+	switch (state) {
+    		case COMMENT :
+    			return "COMMENT";
+    			break;
+    		
+    		case DECIMAL_ZERO :
+    			return "DECIMAL_ZERO";
+    			break;
+    		
+    		case DECIMAL :
+    			return "DECIMAL";
+				break;  
+				      			
+    		case OCTO:
+    			return "OCTO";
+				break; 
+				      			
+    		case HEXA:
+    			return "HEXA";
+				break;
+				     			
+    		case DIRECTIVE:
+    			return "DIRECTIVE";
+				break; 
+				     			
+    		case REGISTER:
+    			return "REGISTER";
+				break; 
+				     			
+    		case SYMBOL:
+    			return "SYMBOL";
+				break;
+				
+			case PUNCTUATION:
+    			return "PUNCTUATION";
+				break; 
+			
+			case LABEL:
+    			return "LABEL";
+				break; 
+				     			
+    		default :
+    			return "ERROR";
+				break;
+	}
+}
 
 
 

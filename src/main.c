@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <getopt.h>
 
 
 #include <global.h>
@@ -17,6 +18,10 @@
 #include <functions.h>
 
 
+
+/* Extern variable definition */
+int testID = 0;
+
 /**
  * @param exec Name of executable.
  * @return Nothing.
@@ -24,7 +29,7 @@
  *
  */
 void print_usage( char *exec ) {
-    fprintf(stderr, "Usage: %s file.s\n",
+    fprintf(stderr, "Usage: %s [-lbr] [-t #ID] file.s\n",
             exec);
 }
 
@@ -43,26 +48,73 @@ int main ( int argc, char *argv[] ) {
     char         	 *file 	= NULL;
 
     /* exemples d'utilisation des macros du fichier notify.h */
-    /* WARNING_MSG : sera toujours affiche */
-    WARNING_MSG("Holà !");
+    /* WARNING_MSG : sera toujours affiche*/
+    WARNING_MSG("MIPS Assembler");
 
     /* macro INFO_MSG : uniquement si compilé avec -DVERBOSE. Cf. Makefile*/
-    INFO_MSG("Un message INFO_MSG : Debut du programme %s", argv[0]);
+    INFO_MSG("Verbose mode %s", argv[0]);
 
     /* macro DEBUG_MSG : uniquement si compilé avec -DDEBUG (ie : compilation avec make debug). Cf. Makefile */
-    DEBUG_MSG("Good work Youbi !");
-
+    DEBUG_MSG("Debug mode");
+    
     /* La macro suivante provoquerait l'affichage du message
        puis la sortie du programme avec un code erreur non nul (EXIT_FAILURE) */
-    /* ERROR_MSG("Erreur. Arret du programme"); */
+	/* ERROR_MSG("Erreur. Arret du programme"); */
+    
+    /* TODO  make it more robust */
+    /* Options Management */
 
-
-    if ( argc <2 ) {
-        print_usage(argv[0]);
-        exit( EXIT_FAILURE );
+    int opt;
+    
+    enum { LIST_MODE, OBJECT_MODE, ELF_MODE, TEST_MODE } mode = ELF_MODE;
+    
+	while ((opt = getopt(argc, argv, "lbrt")) != -1) {
+        switch (opt) {
+        case 'l':
+        	if ( argc <3 ) {
+				print_usage(argv[0]);
+				exit( EXIT_FAILURE );
+			}
+			
+        	mode = LIST_MODE;
+        	
+        break;
+        case 'b':
+        	if ( argc <3 ) {
+				print_usage(argv[0]);
+				exit( EXIT_FAILURE );
+			}
+			
+        	mode = OBJECT_MODE; 
+        break;
+        case 'r':
+        	if ( argc <3 ) {
+				print_usage(argv[0]);
+				exit( EXIT_FAILURE );
+			}
+			
+        	mode = ELF_MODE; 
+        break;
+        case 't': 
+        	if ( argc <4 ) {
+				print_usage(argv[0]);
+				exit( EXIT_FAILURE );
+			}
+			
+        	mode = TEST_MODE;
+        	testID = atoi(argv[2]);
+        	
+        break;
+        
+        }
     }
+    
+    if ( argc <2 ) {
+		print_usage(argv[0]);
+		exit( EXIT_FAILURE );
+	}
 
-
+	/* Final argv (Merci d'y avoir pensé ;) ) */
     file  	= argv[argc-1];
 
 
@@ -79,6 +131,40 @@ int main ( int argc, char *argv[] ) {
     chain ch = make_collection();
     
     lex_load_file( file, &nlines, ch );
+    
+    /* ---- TEST 2 ---- */
+
+    /* Dump lexeme chain : */
+    
+    if (testID == 2) {
+    
+		chain chcopy = ch;
+		chain in;
+		
+		while (  chcopy != NULL ) {
+			in = chcopy;
+			in = read_line( in );
+			
+			if ( in != NULL ) {
+				DEBUG_MSG("Line %d", in->line );
+			
+				do {
+				
+					if (read_lex( in ) != NULL ) {
+						WARNING_MSG("%s", state_to_string( read_lex(in)->type ) );
+					}
+			
+					in = read_line( in );
+				} while ( in != NULL );
+			
+				DEBUG_MSG("[NL]");
+			}
+			
+			chcopy = next_line( chcopy );
+			
+		}
+    }
+    
     
     /* Generate the instruction set tab */
 

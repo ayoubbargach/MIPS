@@ -35,11 +35,10 @@
 chain make_collection ( void ) {
 	chain ch = malloc( sizeof( *ch ));
 
-	/* Gestion des erreurs */
+	/* Error Management */
 	if (ch == NULL) {
-		WARNING_MSG("Memory error : Echec Malloc.");
-		exit(EXIT_FAILURE);
-	}
+		ERROR_MSG("Memory error : Malloc failed.");
+    }
 
 	/* Init */
 
@@ -57,18 +56,19 @@ chain make_collection ( void ) {
  *
  */
  
-chain add_chain_next( chain parent ) {
+chain add_chain_next( chain parent, int nline ) {
 	chain ch = malloc( sizeof( *ch ));
 
-	/* Gestion des erreurs */
+	/* Error Management */
 	if (ch == NULL) {
-		WARNING_MSG("Memory error : Echec Malloc.");
-		exit(EXIT_FAILURE);
-	}
+		ERROR_MSG("Memory error : Malloc failed.");
+    }
+    
 
 	/* Init */
 
 	parent->next = ch;
+	ch->line = nline;
 	ch->next = NULL;
 	ch->this.bottom = NULL;
 
@@ -82,18 +82,19 @@ chain add_chain_next( chain parent ) {
  *
  */
  
-chain add_chain_newline( chain parent ) {
+chain add_chain_newline( chain parent, int nline ) {
 	chain ch = malloc( sizeof( *ch ));
 
-	/* Gestion des erreurs */
+	/* Error Management */
 	if (ch == NULL) {
-		WARNING_MSG("Erreur Mémoire : Echec Malloc.");
-		exit(EXIT_FAILURE);
-	}
+		ERROR_MSG("Memory error : Malloc failed.");
+    }
+    
 
 	/* Init */
 
 	parent->this.bottom = ch;
+	ch->line = nline;
 	ch->next = NULL;
 	ch->this.bottom = NULL;
 
@@ -107,6 +108,21 @@ chain add_chain_newline( chain parent ) {
 
 /* ##### LEX functions ##### */
 
+/**
+ * @return A digit pointer.
+ * @brief Simple function to make a digit.
+ *
+ */
+digit make_digit( void ) {
+	digit dig = malloc( sizeof( *dig ) );
+	
+	/* Error Management */
+	if (dig == NULL) {
+		ERROR_MSG("Memory error : Malloc failed.");
+    }
+    
+	return dig;
+}
  
 /**
  * @param type Explicit type of lexeme.
@@ -116,48 +132,54 @@ chain add_chain_newline( chain parent ) {
  *
  */
 
-lex make_lex( unsigned int type, char * value ) {
+lex make_lex( unsigned int type, char * value, int sign ) {
 	lex l = malloc( sizeof( *l ) );
+	
+	/* Error Management */
+	if (l == NULL) {
+		ERROR_MSG("Memory error : Malloc failed.");
+    }
+    
 	l->type = type;
 	
-	/* Init digit, can be useful */
-	digit dig;
+	if ( type == DECIMAL && type == OCTO && type == HEXA ) {
+		digit dig = make_digit();
 	
-	switch (type) {
-    		case DECIMAL:
-    			dig.type = DECIMAL;
-    			dig.this.integer = atoi( value );
-    			
-    			l->this.digit = dig;
-    			
-				break;  
-				      			
-    		case OCTO:
-    			dig.type = OCTO;
-    			dig.this.octo = atoi( value );
-    			
-    			l->this.digit = dig;
-    			
-				break; 
-				      			
-    		case HEXA:
-    			dig.type = OCTO;
-    			dig.this.hexa = value;
-    			
-    			l->this.digit = dig;
-    			
-				break;
-				     			
-    		default :
-    			strncpy ( l->this.value, value, sizeof(l->this.value) );
-				break;
+		switch (type) {
+				case DECIMAL:
+					dig->type = DECIMAL;
+					dig->sign = sign;
+					dig->this.integer = atoi( value );
+					
+					l->this.digit = dig;
+					
+					break;  
+						  			
+				case OCTO:
+					dig->type = OCTO;
+					dig->sign = sign;
+					dig->this.octo = atoi( value );
+					
+					l->this.digit = dig;
+					
+					break; 
+						  			
+				case HEXA:
+					dig->type = OCTO;
+					dig->sign = sign;
+					dig->this.hexa = value;
+					
+					l->this.digit = dig;
+					
+					break;
+						 			
+				default :
+					break;
+		}
 	}
-	
-	/* Gestion des erreurs */
-	if (l == NULL) {
-		WARNING_MSG("Erreur Mémoire : Echec Malloc.");
-        exit(EXIT_FAILURE);
-    }
+	else {
+		strncpy ( l->this.value, value, sizeof(l->this.value) );
+	}
 	
 	return l;
 }
@@ -231,9 +253,6 @@ chain next_line( chain parent ) {
 	return NULL ;
 	
 }
-
-
-
 
 
 

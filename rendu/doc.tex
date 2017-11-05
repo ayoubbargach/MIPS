@@ -1,0 +1,385 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Journal Article
+% LaTeX Template
+% Version 1.4 (15/5/16)
+%
+% This template has been downloaded from:
+% http://www.LaTeXTemplates.com
+%
+% Original author:
+% Frits Wenneker (http://www.howtotex.com) with extensive modifications by
+% Vel (vel@LaTeXTemplates.com)
+%
+% License:
+% CC BY-NC-SA 3.0 (http://creativecommons.org/licenses/by-nc-sa/3.0/)
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%----------------------------------------------------------------------------------------
+%	PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
+%----------------------------------------------------------------------------------------
+
+\documentclass[twoside,twocolumn]{article}
+
+\usepackage{blindtext} % Package to generate dummy text throughout this template 
+
+\usepackage[sc]{mathpazo} % Use the Palatino font
+\usepackage[T1]{fontenc} % Use 8-bit encoding that has 256 glyphs
+\linespread{1.05} % Line spacing - Palatino needs more space between lines
+\usepackage{microtype} % Slightly tweak font spacing for aesthetics
+
+\usepackage[english]{babel} % Language hyphenation and typographical rules
+
+\usepackage[hmarginratio=1:1,top=32mm,columnsep=20pt]{geometry} % Document margins
+\usepackage[hang, small,labelfont=bf,up,textfont=it,up]{caption} % Custom captions under/above floats in tables or figures
+\usepackage{booktabs} % Horizontal rules in tables
+
+\usepackage{lettrine} % The lettrine is the first enlarged letter at the beginning of the text
+
+\usepackage{enumitem} % Customized lists
+\setlist[itemize]{noitemsep} % Make itemize lists more compact
+
+\usepackage{abstract} % Allows abstract customization
+\renewcommand{\abstractnamefont}{\normalfont\bfseries} % Set the "Abstract" text to bold
+\renewcommand{\abstracttextfont}{\normalfont\small\itshape} % Set the abstract itself to small italic text
+
+\usepackage{titlesec} % Allows customization of titles
+\renewcommand\thesection{\Roman{section}} % Roman numerals for the sections
+\renewcommand\thesubsection{\roman{subsection}} % roman numerals for subsections
+\titleformat{\section}[block]{\large\scshape\centering}{\thesection.}{1em}{} % Change the look of the section titles
+\titleformat{\subsection}[block]{\large}{\thesubsection.}{1em}{} % Change the look of the section titles
+
+\usepackage{fancyhdr} % Headers and footers
+\pagestyle{fancy} % All pages have headers and footers
+\fancyhead{} % Blank out the default header
+\fancyfoot{} % Blank out the default footer
+\fancyhead[C]{MIPS Assembler $\bullet$ November 2017 $\bullet$ Bargach Ayoub} % Custom header text
+\fancyfoot[RO,LE]{\thepage} % Custom footer text
+
+\usepackage{titling} % Customizing the title section
+
+\usepackage{hyperref} % For hyperlinks in the PDF
+
+\usepackage{listings} % To print code smartly
+
+\usepackage[toc,page]{appendix} % To manage appendix
+
+%----------------------------------------------------------------------------------------
+%	TITLE SECTION
+%----------------------------------------------------------------------------------------
+
+\setlength{\droptitle}{-4\baselineskip} % Move the title up
+
+\pretitle{\begin{center}\Huge\bfseries} % Article title formatting
+\posttitle{\end{center}} % Article title closing formatting
+\title{MIPS Assembler} % Article title
+\author{%
+\textsc{Ayoub Bargach} \\[1ex] % Your name, in case : \thanks{A thank you or further information}
+\normalsize Grenoble INP \\ % Your institution
+\normalsize https://github.com/bargacha/MIPS % Your email address
+%\and % Uncomment if 2 authors are required, duplicate these 4 lines if more
+%\textsc{Jane Smith}\thanks{Corresponding author} \\[1ex] % Second author's name
+%\normalsize University of Utah \\ % Second author's institution
+%\normalsize \href{mailto:jane@smith.com}{jane@smith.com} % Second author's email address
+}
+\date{\today} % Leave empty to omit a date
+\renewcommand{\maketitlehookd}{%
+\begin{abstract}
+\noindent This documentation aim to explicit the way the MIPS assembly have been built. This project have been followed through my education in Phelma - Grenoble INP. A basic source files have been written by François Portet and François Cayre. The project goal is to build a complete assembler in C language. All is open source in my github. You will find there all the information step by step in how all of this program is written. From structure to code, you will find a lot of explanation of how an assembler is built. A special thanks to all the professor team who takes time to help us when we are in need.
+\end{abstract}
+}
+
+%----------------------------------------------------------------------------------------
+
+\begin{document}
+
+% Print the title
+\maketitle
+
+%----------------------------------------------------------------------------------------
+%	ARTICLE CONTENTS
+%----------------------------------------------------------------------------------------
+
+\section{Introduction}
+
+\lettrine[nindent=0em,lines=3]{T} he goal of this computing project is to build an assembler for MIPS processors using C language. This assembler will be able to translate a human understandood language (Here assembler) to a machine understood language (binaries). This binaries are designed for MIPS 32 bits processors. As an input, the program take an object file that is actually a text file. Depending on options, it will produce :
+
+\begin{itemize}
+
+  \item An assembly list.
+  \item A binary object.
+  \item An object in ELF format.
+
+\end{itemize}
+
+We will \textbf{not} implement all the instruction set. Indeed, the purpose is to highlight the assembler function, not to build a brand new one (gcc do it very well). To be aware about what this project manage, please refer to sprint 2 section. In fact, this project have been built in 4 deliverables (or sprints). For each one, there is a description of sprint goals and functions that have been implemented.
+
+
+
+%------------------------------------------------
+
+\section{Run and test}
+
+Before we start, use makefile to compile the program (\textbf{ debug } if you want to print logs and \textbf{ release } if not). In addition, you can use some options to explicit to the program what you want as a result. It is not mandatory to use them, by default, you will get an object ELF file.
+
+\begin{lstlisting}
+./as-mips [Options ..] pathToFile
+\end{lstlisting}
+
+
+\begin{table}[h!]
+\caption{Options}
+\centering
+\begin{tabular}{|l|r|}
+\hline
+Option & Function \\
+\hline
+-l & To produce an assembly list \\
+-b & To produce only a binary object \\
+-r & For ELF release \\
+-t & To launch tests \\
+\hline
+\end{tabular}
+\end{table}
+
+\textit{Note :} Each test is speciafied by an ID. Just fill the ID to generate the test. (Can be run either in debug and release) Please refer to appendix A to have a precise description on every test.
+
+
+%------------------------------------------------
+
+\section{The project}
+
+\subsection{What is MIPS ?}
+MIPS is a reduced instruction set computer (RISC) instruction set architecture. Designed by MIPS Technologies, it have been introduced in 1985. The philosophy of a RISC architecture is to offer a reduced -means in a single memory cycle- instruction set. It doesn't mean that there is less instruction. In fact, RISC instruction are sometimes bigger than CISC ones. RISC architectures have fixed-length instructions and simplified incoding that enable an imporved code density. Also, it is based on load/store architecture that means that the result of calculations is made by specific instructions. ALU instructions mainly use general purpose registers that simplify compiler design. RISC processors solve generally an instruction in 1 cycle.
+
+Like in major RISC processors, MIPS are featured in a Harvard memory model that seperate physically the instructionmemory from data memory. Changing data does not impact the code.
+
+In this project, we aim to focus on a specific MIPS processor, the first one. We will not be interessed to Application-specific extensions such as MIPS MCU or MIPS DSP (For signal processing). The aim is to build a simple assembler that can be run in MIPS I for instance. All extension that can be seen in other MIPS extension such as floating point instruction will not be handled.
+
+The MIPS architecture is based on pipeline architecture. As a picture often speaks better than a thousand words, here a simplified drawing of the first commercialized MIPS processors R2000 :
+
+% ADD pipeline picture 
+
+% ADD layout picture 
+
+This pipeline is organised in several stages :
+
+\begin{description}
+ \item[ Instruction Fetch ] This stage retrieve the next instruction to decode using the program counter.
+ \item[ Instruction Decode ] The retrieved instruction is decoded following the type of the instruction.
+ \item[ Execute ] The instruction is executed. The execution depends on the decoded input. MUXs are used to manage the execution and control the ALU input.
+ \item[ Memory access ] Give access to memory in order to load or store an information in registers.
+ \item[ Write back ] Upload the value of some register depending of the excution result.
+\end{description}
+
+This pipeline is the same in many RISC processors. If you are intersseted on how a processor is designed, here a VHDL description of an ARM processor with the same number of stages (Of course, the instruciton set is completly different !) : https://github.com/bargacha/ARM-Processor
+
+Ideally, each instruction is made in a cycle and follows each stage. However, when instructions depends on older ones or when branch instructions are launched, we may have some delay.
+
+The MIPS processor have a 4Go memory adressable by bytes. That means that when increment the Program Counter (PC), we jump 8 bits. In addition, all MIPS processors are \textit{big endian} : The high byte first, followed by the lower bytes.
+
+\subsection{All features}
+
+All features are recorded in this section. In order to manage correctly the project, I started by pinpoint the subject and describe what will be implemented in our basic assembly project. The main goal is to :
+
+\begin{quotation}
+ \textbf{Implement a basic MIPS assembler. As a input, it will get a standarized MIPS assembler file and should produce as an output a ELF binary file that can be executed using QEMU, an emulator for many basics processors.}
+\end{quotation}
+
+Features are :
+
+\begin{itemize}
+ \item An assembler for MIPS 32 bits microprocessor.
+ \item Manage 32 General Purpose Registers with support of conventional notations (\$sp means register \$29).
+ \item Main instructions are supported. The standard proposed by MIPS Technologies will be followed. Please refer to InstSet.txt to see wich ones. \textbf{ In some conditions, you can add instructions directly in this file ! } Also, pseudo-instructions are implemented.
+ \item Comments are managed.
+ \item Main directives are managed : .text, .data, .bss, .set (only noreorder), .word ...
+ \item All adressing modes will be implemented.
+ \item Can take options that define wich input will be produced. (See section 'Run and Test')
+ \item Can produce an assembly list that explicit each line of the source.
+ \item Can produce a binary object.
+ \item Can produce an ELF binary object used in many OS.
+ \item Using -t option can print some testing logs. No output file are produced.
+\end{itemize}
+
+In addition, at the time of writing, I plan to offer some basic optimisation examples to reduce hazard in pipeline processors. To do so, please add the option -o.
+
+\subsection{Program structure and delivrables}
+
+This document is organised according to our professors intructions. Indeed, this project have been made in my college context. It means that code is built our deliverables to provide each week. Here a description of each deliverable.
+
+\begin{description}
+ \item[ Deliverable 1 ] Lexical analysis. Understand the signification of each word and build a chain of lexemes.
+ \item[ Deliverable 2 ] Syntaxic analysis. All instructions are fetched and decoded.
+ \item[ Deliverable 3 ] Syntaxic analysis. The instructions syntax is verified and relocation inputs are generated.
+ \item[ Deliverable 4 ] The outputs are generated. (Assembly list, binary object and ELF binary object)
+\end{description}
+
+The program structure is :
+\begin{description}
+ \item [ main.c ] The main code.
+ \item [ lex.c ] Lexical analysis.
+ \item [ syn.c ] Syntaxic analysis.
+ \item [ eval.c ] Used in syntaxic analysis to evaluate relocation informations.
+ \item [ functions.c ] Some useful functions.
+\end{description}
+
+For more information, please refer to the head of each source where a complete description is provided.
+
+
+
+\subsection{Project management tools}
+In order to keep the project organised and be able to work with other collaborators, all sources will be shared in my github. To get initial sources, here the college link : http://tdinfo.phelma.grenoble-inp.fr/
+
+In addition, a project management tool will be used : Odoo. It is an open source tool based on kanban model. There is many tools for collaborative work. In order to reduce costs, I took a free AWS server and I implemented a basic configuration provided by http://www.pragtech.co.in/ base on ubuntu.
+
+Finally, this report is written using LateX. The sources are also available in my github.
+
+The program will be tested for ubuntu 16.04 and centos 6 standard configuration.
+
+% %------------------------------------------------
+% 
+% \section{Delivrable 1}
+% 
+% \subsection{Goals and features}
+% 
+% \subsection{Examples and test}
+
+%------------------------------------------------
+
+\section{Delivrable 1}
+
+\subsection{Goals and features}
+In this first deliverable, the aim is to produce a complete lexical analysis. The central function is :
+
+\begin{lstlisting}[language=C]
+void lex_standardise( char* in, 
+char* out )
+\end{lstlisting}
+
+It is responsible of the correct shape input and some upstream processing. It cleans redondant spaces and help to detect comments for instance by puting a space before. Indeed, the following function uses a simple strtok function to split a line into different word. It is mandatory to have a fully functionable function !
+
+This function do some adjustment :
+
+\begin{itemize}
+ \item Add space before and after for ',', ')', '(' and '\#'
+ \item No space before and only one after for ':'
+ \item No space after and only one before for '-'
+\end{itemize}
+
+The next step concern the construction the chain of lexemes. A chain is a coding method in C to structure data. In our case, it will have this structure :
+
+\begin{lstlisting}[language=C]
+typedef struct chain_t {
+  struct chain_t *next;
+  union {
+    struct chain_t *bottom;
+    lex bottom_lex;
+    inst bottom_ins;
+    symbol sym;
+    code c;
+  }this;
+} *chain;
+\end{lstlisting}
+
+In order to symplify the code, We use the same structure for all types of chains. This able us to user chain elements of different natures and combine chain between them. For this purpose, we use there 'union' directive. So we can manage different types of variables and reducing by the same way the structure lenght in bytes.
+
+For lexemes chain, here a simple drawing of how everything is working :
+
+% TODO Ajouter l'image pour la collection de lexemes
+
+To recognize lexemes, we use a FSM. Here another drawing that explicit the general function. For more information, the code have been commented to specify each step.
+
+% TODO Ajouter l'image de la FSM
+
+In the end of this deliverable, we must have a clean collection of lexemes. It means that sometimes, we may have some errors. For example, the lexeme '0R6155' is not legal. Indeed, this syntax means that we expect an octal number and the char 'R' is not expected. However, the program understand some basic deviations such as '099' that can be translated to a Decimal number.
+
+Thus, when a lexeme is not legal, a error is raise specified bad the sentence : 'Lexical error'.
+
+
+\subsection{Examples and test}
+
+To try lex\_standardise, run test 1 with the file miam.s :
+
+\begin{lstlisting}
+./as-mips -t 1 tests/miam.s
+\end{lstlisting}
+
+It will print you the input and the standirized output. Normally, this function manage all basic cases. Of course, there is no further verifications in lexical analysis. It means that this function do not raise error. It just bring an easy readable string that can be used faster after.
+
+To display lexeme chain, run test 2. It will print the recognized lexeme and type.
+
+%------------------------------------------------
+
+\section{Delivrable 2}
+
+\subsection{Goals and features}
+
+\subsection{Examples and test}
+
+%------------------------------------------------
+
+\section{Delivrable 3}
+
+\subsection{Goals and features}
+
+\subsection{Examples and test}
+
+%------------------------------------------------
+
+\section{Delivrable 4}
+
+\subsection{Goals and features}
+
+\subsection{Examples and test}
+
+
+%----------------------------------------------------------------------------------------
+%	REFERENCE LIST
+%----------------------------------------------------------------------------------------
+
+\begin{thebibliography}{99} % Bibliography - this is intentionally simple in this template
+
+% \bibitem[Figueredo and Wolf, 2009]{Figueredo:2009dg}
+% Figueredo, A.~J. and Wolf, P. S.~A. (2009).
+% \newblock Assortative pairing and life history strategy - a cross-cultural
+%   study.
+% \newblock {\em Human Nature}, 20:317--330.
+
+\bibitem[Wikipedia, 2017]{RISC}
+\newblock Reduced instruction set computer
+
+\bibitem[Wikipedia, 2017]{MIPS}
+\newblock MIPS architecture
+
+\bibitem[Wikipedia, 2017]{RISC}
+\newblock 
+
+\end{thebibliography}
+
+%----------------------------------------------------------------------------------------
+
+\appendix
+\section{All test functions by ID}
+
+\begin{table}[!h]
+\caption{Tests by ID}
+\centering
+\begin{tabular}{|p{2cm}|p{2cm}|}
+\hline
+ID & Description \\
+\hline
+1 & Compare input and output of lex\_standarise function \\
+\hline
+2 & Dump the lexeme chain ( to validate the first deliverable ) \\
+\hline
+\end{tabular}
+\end{table}
+
+
+% \section{Title of Appendix B}
+% % the \\ insures the section title is centered below the phrase: Appendix B
+% 
+% Text of Appendix B is Here
+
+\end{document}

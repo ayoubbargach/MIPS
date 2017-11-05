@@ -1,0 +1,55 @@
+\hypertarget{eval_8c}{}\section{/home/plizar/\+Documents/\+M\+I\+P\+S/\+M\+I\+P\+S/src/eval.c File Reference}
+\label{eval_8c}\index{/home/plizar/\+Documents/\+M\+I\+P\+S/\+M\+I\+P\+S/src/eval.\+c@{/home/plizar/\+Documents/\+M\+I\+P\+S/\+M\+I\+P\+S/src/eval.\+c}}
+
+
+M\+I\+PS assembly evaluation.  
+
+
+{\ttfamily \#include $<$stdlib.\+h$>$}\\*
+{\ttfamily \#include $<$stdio.\+h$>$}\\*
+{\ttfamily \#include $<$string.\+h$>$}\\*
+{\ttfamily \#include $<$ctype.\+h$>$}\\*
+{\ttfamily \#include $<$strings.\+h$>$}\\*
+{\ttfamily \#include $<$global.\+h$>$}\\*
+{\ttfamily \#include $<$notify.\+h$>$}\\*
+{\ttfamily \#include $<$syn.\+h$>$}\\*
+{\ttfamily \#include $<$functions.\+h$>$}\\*
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+int \hyperlink{eval_8c_ac12dad7041fb0c48d184df10f59803b6}{eval} (lex l)
+\begin{DoxyCompactList}\small\item\em This routine analyze the lexeme. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+M\+I\+PS assembly evaluation. 
+
+\begin{DoxyAuthor}{Author}
+François Portet \href{mailto:francois.portet@imag.fr}{\tt francois.\+portet@imag.\+fr} These routines perform the evalution of operands. It translate the register/signed value/hexa .. to a int value that can be used either by decode\+Instruction function of decode\+Directive. 
+\end{DoxyAuthor}
+
+
+\subsection{Function Documentation}
+\index{eval.\+c@{eval.\+c}!eval@{eval}}
+\index{eval@{eval}!eval.\+c@{eval.\+c}}
+\subsubsection[{\texorpdfstring{eval(lex l)}{eval(lex l)}}]{\setlength{\rightskip}{0pt plus 5cm}int eval (
+\begin{DoxyParamCaption}
+\item[{lex}]{l}
+\end{DoxyParamCaption}
+)}\hypertarget{eval_8c_ac12dad7041fb0c48d184df10f59803b6}{}\label{eval_8c_ac12dad7041fb0c48d184df10f59803b6}
+
+
+This routine analyze the lexeme. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em l} & lexeme to eval \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+An int that results from eval. 
+\end{DoxyReturn}
+
+
+Definition at line 28 of file eval.\+c.
+
