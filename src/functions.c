@@ -7,6 +7,7 @@
  
 #include <stdlib.h>
 #include <stdio.h>
+#include <ctype.h>
 #include <unistd.h>
 #include <string.h>
 
@@ -14,13 +15,6 @@
 #include <notify.h>
 #include <functions.h>
 
-
-/**
- * @param 
- * @return
- * @brief
- *
- */
 
 /* ##### chain functions ##### */
  
@@ -41,7 +35,7 @@ chain make_collection ( void ) {
     }
 
 	/* Init */
-
+	ch->line = 1;
 	ch->next = NULL;
 	ch->this.bottom = NULL;
 
@@ -123,6 +117,32 @@ digit make_digit( void ) {
     
 	return dig;
 }
+
+/**
+ * @param octalNumber From atoi function
+ * @return The converted octal number
+ * @brief This function convert an octal number to an int
+ *
+ */
+
+/* TODO Made it robust => can occur in segfault ? */
+
+int OctalToDecimal(int octalNumber)
+{
+    int decimalNumber = 0, i = 0;
+
+    while(octalNumber != 0)
+    {
+        decimalNumber += (octalNumber%10) << (3*i);
+        ++i;
+        octalNumber/=10;
+    }
+
+    i = 1;
+
+    return decimalNumber;
+}
+
  
 /**
  * @param type Explicit type of lexeme.
@@ -146,35 +166,58 @@ lex make_lex( unsigned int type, char * value, int sign ) {
 		digit dig = make_digit();
 	
 		switch (type) {
-				case DECIMAL:
-					dig->type = DECIMAL;
-					dig->sign = sign;
-					dig->this.integer = atoi( value );
-					
-					l->this.digit = dig;
-					
-					break;  
-						  			
-				case OCTO:
-					dig->type = OCTO;
-					dig->sign = sign;
-					dig->this.octo = atoi( value );
-					
-					l->this.digit = dig;
-					
-					break; 
-						  			
-				case HEXA:
-					dig->type = OCTO;
-					dig->sign = sign;
-					dig->this.hexa = value;
-					
-					l->this.digit = dig;
-					
-					break;
-						 			
-				default :
-					break;
+			case DECIMAL_ZERO:
+				dig->type = DECIMAL_ZERO;
+				dig->sign = sign;
+				dig->this.integer = 0;
+				
+				dig->value = 0;
+				
+				l->this.digit = dig;
+				
+				break;  
+			case DECIMAL:
+				dig->type = DECIMAL;
+				dig->sign = sign;
+				dig->this.integer = atoi( value );
+				
+				if( sign == SIGNED )
+					dig->value = ~ OctalToDecimal(dig->this.integer) + 1; /* NOT(a) + 1 // Complement of 2 */
+				else dig->value = OctalToDecimal(dig->this.integer);
+				
+				l->this.digit = dig;
+				
+				break;  
+					  			
+			case OCTO:
+				dig->type = OCTO;
+				dig->sign = sign;
+				dig->this.octo = atoi( value );
+				
+				if( sign == SIGNED )
+					dig->value = ~ dig->this.integer + 1; /* NOT(a) + 1 // Complement of 2 */
+				else dig->value = dig->this.integer;
+				
+				l->this.digit = dig;
+				
+				break; 
+					  			
+			case HEXA:
+				dig->type = HEXA;
+				dig->sign = sign;
+				dig->this.hexa = value;
+				
+				if( sign == SIGNED )
+					dig->value = ~ (int)strtol(value, NULL, 0) + 1; /* NOT(a) + 1 // Complement of 2 */
+				else dig->value = (int)strtol(value, NULL, 0);
+				
+				
+				l->this.digit = dig;
+				
+				break;
+					 			
+			default :
+				break;
 		}
 	}
 	else {
@@ -254,7 +297,37 @@ chain next_line( chain parent ) {
 	
 }
 
+/**
+ * @return An int
+ * @brief Hash function used to generate a number knowing a string.
+ *
+ */
+int hash( char * s, int modulo ) {
+	int i =0;
+	int result = 0;
+	
+	while ( s[i] != '\0' ) {
+		result = result + ( s[i] << i);
+		i++;
+	}
+	
+	return result % modulo;
+}
 
+/**
+ * @return A string with upper chars
+ * @brief Is used to recognize some symbols. Example : addi -> ADDI. Took from openclassroom forum.
+ *
+ */
+
+void majuscule(char *chaine)
+{
+    int i = 0;
+    for (i = 0 ; chaine[i] != '\0' ; i++)
+    {
+        chaine[i] = toupper(chaine[i]);
+    }
+}
 
 
  

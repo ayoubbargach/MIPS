@@ -348,7 +348,7 @@ void lex_standardise( char* in, char* out ) {
     /* To compare in and out : */
     
     if (testID == 1) {
-		WARNING_MSG("Inp : %s", in);
+		WARNING_MSG("In  : %s", in);
 		WARNING_MSG("Out : %s", out);
     }
 }

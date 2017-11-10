@@ -24,7 +24,35 @@
  * @brief This routine analyze the lexeme.
  *
  */
+
+
+/**
+ * @param l lexeme to eval
+ * @return An int that results from eval.
+ * @brief This routine analyze the lexeme.
+ *
+ */
  
- int eval( lex l ) {
+ unsigned int eval( lex l ) {
+ 
+ 	/* We start by analysing lexeme type, in this function, we only treat digits */
+ 	switch (l->type) {
+ 		case DECIMAL_ZERO :
+ 		case DECIMAL :
+ 		case OCTO :
+ 		case HEXA :
+ 			/* Lexeme is a digit */
+ 			return l->this.digit->value;
+ 		break;
+ 		
+ 		case SYMBOL :
+ 			/* If we are in symbol case : try to find symbol in symTab. If found, add a complete relocation. If not, add an entry in symTab and another in relocation table. */
+ 		break;
+ 		
+ 		default:
+ 			ERROR_MSG("Decode error : failed while trying to decode an immediate value.");
+ 		break;
+ 	}
+ 	
  	return 0;
  }

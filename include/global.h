@@ -72,7 +72,12 @@ enum {INIT, DECIMAL_ZERO, DECIMAL, OCTO, HEXA, SYMBOL, COMMENT, REGISTER, DIRECT
 
 enum {UNSIGNED, SIGNED};
 
-enum {R, I, IB, J};
+enum {R, I, J, IB};
+
+/* enum sections */
+enum {UNDEFINED, TEXT, DATA, BSS};
+
+
 
 /*!
   \brief Type definition of digit.
@@ -82,11 +87,14 @@ typedef struct digit_t {
 	unsigned int type;
 	int sign;
 	
+	/* For debug reasons, we keep all information */
 	union {
 		int integer;
 		int octo;
 		char * hexa;
 	}this;
+	
+	unsigned int value;
 }* digit;
 
 /*!
@@ -102,12 +110,14 @@ typedef struct lexeme_t {
 	}this;
 } *lex;
 
-
-/* Instruction structure as is use in the instruction set */
+/*!
+  \brief Instruction structure as is use in the instruction set.
+ */
 
 typedef struct inst_t {
 	char name[16];
-	char op[16];
+	char opcode[16];
+	unsigned int op;
 	int type;
 	
 	/* Give indication about the waited operands in binary 
@@ -139,6 +149,23 @@ typedef struct code_t {
 	unsigned int value;
 	
 }* code;
+
+/* Relocation struture */
+
+typedef struct rel_t {
+	/* Address of relocation */
+	unsigned int addr;
+	
+	/* Type of relocation : R_MIPS_HI16, R_MIPS_LO16.. */
+	int type;
+	
+	/* Target symbol */
+	symbol sym;
+	
+	/* Symbol to relocate */
+	char value[STRLEN];
+	
+}* rel;
 
 /*!
   \brief INTERNALS: Type definition of chain. To understand the signification of next / bottom, please read the documentation graphs.

@@ -262,9 +262,9 @@ It is responsible of the correct shape input and some upstream processing. It cl
 This function do some adjustment :
 
 \begin{itemize}
- \item Add space before and after for ',' and '\#'
- \item No space before and only one after for ':' and ')'
- \item No space after and only one before for '-' and '('
+ \item Add space before and after for ',', ')', '(' and '\#'
+ \item No space before and only one after for ':'
+ \item No space after and only one before for '-'
 \end{itemize}
 
 The next step concern the construction the chain of lexemes. A chain is a coding method in C to structure data. In our case, it will have this structure :
@@ -292,6 +292,10 @@ To recognize lexemes, we use a FSM. Here another drawing that explicit the gener
 
 % TODO Ajouter l'image de la FSM
 
+In the end of this deliverable, we must have a clean collection of lexemes. It means that sometimes, we may have some errors. For example, the lexeme '0R6155' is not legal. Indeed, this syntax means that we expect an octal number and the char 'R' is not expected. However, the program understand some basic deviations such as '099' that can be translated to a Decimal number.
+
+Thus, when a lexeme is not legal, a error is raise specified bad the sentence : 'Lexical error'.
+
 
 \subsection{Examples and test}
 
@@ -303,13 +307,62 @@ To try lex\_standardise, run test 1 with the file miam.s :
 
 It will print you the input and the standirized output. Normally, this function manage all basic cases. Of course, there is no further verifications in lexical analysis. It means that this function do not raise error. It just bring an easy readable string that can be used faster after.
 
+To display lexeme chain, run test 2. It will print the recognized lexeme and type.
+
 %------------------------------------------------
 
 \section{Delivrable 2}
 
 \subsection{Goals and features}
+In this deliverable, we start by generating the instruction set. The instruction set is the list of all instructions that are managed by our program. In MIPS context, there 3 kinds of instructions :
+
+% Ajouter une illustrations des différents types
+
+Also, we note that for instruction of I-type, there is 2 ways to code it in MIPS assembly code (depending on the instruction), for example : 
+
+\begin{itemize}
+ \item For ADDI instruction : ADDI \$rt, \$rs, immediate
+ \item For Load instruction : LW \$rt, offset(\$rs)
+\end{itemize}
+
+For this reason, we have in fact 4 type of grammatical sentences in MIPS Assembly language : R, I (for ADDI), J and IB (for LW). I and IB is a distinction who have nothing to do with the binary decoding. It will just help us to optimize the code.
+
+The list of this instructions are set in the file ``instSet.txt``. The file can be modified to add other primary instructions (To add for example floating points instructions). The file have been designed as follows :
+
+\begin{lstlisting}
+OP OPCODE TYPE OPERAND SPECIAL
+SRL 000010 0 0111 rs=00001
+\end{lstlisting}
+
+\begin{itemize}
+ \item OP is the name of operation
+ \item OPCODE, the code translate in binary
+ \item TYPE, decribe the type defined in global.h by ''enum \{R, I, J, IB\};``
+ \item OPERAND, expected operands. For R-type, 0111 means 0 rs 1 rt 1 rd 1 sa. So we need rt, rd and sa to execute the instruction. If not the assembler fail !
+ \item SPECIAL, for future purposes. If an operand is not defined, you can set it (rs=00001). It is very useful to contruct pseudo-instructions.
+\end{itemize}
+
+Using this simple implementation, we build the instSet table using the structure inst.
+
+\begin{lstlisting}[language=C]
+typedef struct inst_t {
+  char name[16];
+  char op[16];
+  int type;
+  char operand[8];
+  char special[STRLEN];
+} *inst;
+\end{lstlisting}
+
+For performance purposes, we use a simple hash function knowing that our table does not exceed hundred lines. Furthermore, the instruction ID will be built by concatenating ASCII value and calculate it modulo 1000.
+
+Thus, for ADD, Hash function will calculate : $( A + D + D ) \% 1000$. Also, the program analyse automatically if there is any collision. If there is one, he raises an error.
+
+In fact, we add all instructions included pseudo-instruction in instSet.txt
+
 
 \subsection{Examples and test}
+To print all the instruction tab, please run test 3. It will also print you the ID of the symbol.
 
 %------------------------------------------------
 
@@ -356,15 +409,18 @@ It will print you the input and the standirized output. Normally, this function 
 \appendix
 \section{All test functions by ID}
 
-\begin{table}[h!]
+\begin{table}[!h]
 \caption{Tests by ID}
 \centering
-\begin{tabular}{|l|r|}
+\begin{tabular}{|p{2cm}|p{2cm}|}
 \hline
 ID & Description \\
 \hline
-1 &  \\
-
+1 & Compare input and output of lex\_standarise function \\
+\hline
+2 & Dump the lexeme chain ( to validate the first deliverable ) \\
+\hline
+3 & Print instruction table \\
 \hline
 \end{tabular}
 \end{table}

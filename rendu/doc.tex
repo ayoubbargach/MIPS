@@ -314,8 +314,79 @@ To display lexeme chain, run test 2. It will print the recognized lexeme and typ
 \section{Delivrable 2}
 
 \subsection{Goals and features}
+In this deliverable, we start by generating the instruction set. The instruction set is the list of all instructions that are managed by our program. In MIPS context, there 3 kinds of instructions :
+
+% Ajouter une illustrations des différents types
+
+Also, we note that for instruction of I-type, there is 2 ways to code it in MIPS assembly code (depending on the instruction), for example : 
+
+\begin{itemize}
+ \item For ADDI instruction : ADDI \$rt, \$rs, immediate
+ \item For Load instruction : LW \$rt, offset(\$rs)
+\end{itemize}
+
+For this reason, we have in fact 4 type of grammatical sentences in MIPS Assembly language : R, I (for ADDI), J and IB (for LW). I and IB is a distinction who have nothing to do with the binary decoding. It will just help us to optimize the code.
+
+The list of this instructions are set in the file ``instSet.txt``. The file can be modified to add other primary instructions (To add for example floating points instructions). The file have been designed as follows :
+
+\begin{lstlisting}
+OP OPCODE TYPE OPERAND SPECIAL
+SRL 000010 0 0111 rs=00001
+\end{lstlisting}
+
+\begin{itemize}
+ \item OP is the name of operation
+ \item OPCODE, the code translate in binary
+ \item TYPE, decribe the type defined in global.h by ''enum \{R, I, J, IB\};``
+ \item OPERAND, expected operands. For R-type, 0111 means 0 rs 1 rt 1 rd 1 sa. So we need rt, rd and sa to execute the instruction. If not the assembler fail !
+ \item SPECIAL, for future purposes. If an operand is not defined, you can set it (rs=00001). It is very useful to contruct pseudo-instructions.
+\end{itemize}
+
+Using this simple implementation, we build the instSet table using the structure inst.
+
+\begin{lstlisting}[language=C]
+typedef struct inst_t {
+  char name[16];
+  char op[16];
+  int type;
+  char operand[8];
+  char special[STRLEN];
+} *inst;
+\end{lstlisting}
+
+For performance purposes, we use a simple hash function knowing that our table does not exceed hundred lines. Furthermore, the instruction ID will be built by concatenating/decaling ASCII value and calculate it modulo 1000.
+
+Thus, for ADD, Hash function will calculate : $( A + D << 1 + D << 2 ) \% 1000$. Also, the program analyse automatically if there is any collision. If there is one, he raises an error.
+
+In fact, we add all instructions included pseudo-instruction in instSet.txt. If you had more instructions, be aware that you will have to change certainely the hash function. But before, try changing modulo int.
+
+\textit{Note} : Please respect the instSet syntax in order to avoid any problem. a single double space may occur in unpredication errors.
+
+The next stage is to generate the symbol table. We use the same structure as lexeme chain. we will get something that is near to this illustration :
+
+% Ajouter une illustration de la structure de SymTab
+
+After that, we range through all lines of lexeme chain to analyse it, in other word, to make the syntaxic analysis. Each step is described in syn.c. The ''main`` function is fetch(). it uses different functions from decodeInstruction() to decodeDirective(). We ''fetch`` each line and generate the next elements of code chain, symbol chain and relocation chain. In the end of this process, we will run a final function named eval. This function will make the final links between symtab and undefined yet relocations. (But all of this will be made in the third deliverable)
+
 
 \subsection{Examples and test}
+To print all the instruction tab, please run test 3. It will also print you the ID of the symbol. This test is useful is you want to add instructions.  You can also update hash function in order to make it more robust :
+
+\begin{lstlisting}[language=C]
+int hash( char * s, int modulo ) {
+  int i =0;
+  int result = 0;
+
+  while ( s[i] != '\0' ) {
+    result = result + ( s[i] << i);
+    i++;
+  }
+  
+  return result % modulo;
+}
+\end{lstlisting}
+
+
 
 %------------------------------------------------
 
@@ -372,6 +443,8 @@ ID & Description \\
 1 & Compare input and output of lex\_standarise function \\
 \hline
 2 & Dump the lexeme chain ( to validate the first deliverable ) \\
+\hline
+3 & Print instruction table \\
 \hline
 \end{tabular}
 \end{table}

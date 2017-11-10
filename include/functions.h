@@ -16,6 +16,7 @@ chain add_chain_next( chain, int );
 chain add_chain_newline( chain, int );
 
 digit make_digit( void );
+int OctalToDecimal(int octalNumber);
 lex make_lex( unsigned int, char *, int );
 void add_lex( chain , lex );
 
@@ -30,6 +31,12 @@ chain next_line( chain );
 void del_lex( lex );
 void del_chain( chain );
 
-extern int testID;
+/* Hash function */
+
+int hash( char *, int );
+
+/* String function */
+void majuscule(char *);
+
 
 #endif /* _FUNCTIONS_H */

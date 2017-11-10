@@ -24,6 +24,7 @@
 #include <syn.h>
 #include <functions.h>
 
+
 /**
  * @return A tab of the desired instruction set.
  * @brief A table with all instruction set information is loaded. The structure of this information is described in "inst" type definition.
@@ -82,13 +83,15 @@ void instructionSet( inst * tab ) {
             
             /* Add instruction to the table */
             
-            tab[j]= makeInst( result[0], result[1], result[2], result[3], result[4]);
-            j++;
+            j = hash( result[0], 1000);
             
-            /*
+            if ( tab[j] != NULL ) {
+            	ERROR_MSG("There is a collision");
+            }
             else {
-            	ERROR_MSG("The %s file is not well written --- Aborts",file);
-            } */
+            	/* Make instruction and record it */
+            	tab[j]= makeInst( result[0], result[1], result[2], result[3], result[4]);
+            } 
             
             
             i=0;
@@ -101,11 +104,19 @@ void instructionSet( inst * tab ) {
 	
 	tab[j] = NULL;
 	
-	/* TEST CODE
+	/* ---- TEST 3 ---- */
 	
-	for (i=0;i<20;i++) {
-		WARNING_MSG("The result is %s -> Op %s at %p", tab[i]->name, tab[i]->op, tab[i] );
-	} */
+	if (testID == 3) {
+    
+		i=0;
+		while ( i<1000 ) {
+			if (tab[i] != NULL) {
+				WARNING_MSG("%s -> Op %s at %d", tab[i]->name, tab[i]->opcode, i );
+			}
+		
+			i++;
+		}
+	}
 	
 	
 }
@@ -127,20 +138,38 @@ inst makeInst( char* name, char* op, char* type, char* operand, char* special ) 
 
 	/* strncpy copy the string arguments in the structure, you can't do that with a simple "=" ! */
 	strncpy ( ins->name, name, sizeof(ins->name) );
-	strncpy ( ins->op, op, sizeof(ins->op) );
+	strncpy ( ins->opcode, op, sizeof(ins->opcode) );
+	ins->op = binaryToInt( op );
+	
 	ins->type = atoi( type );
 	strncpy ( ins->operand, operand, sizeof(ins->operand) );
 	
 	if (special != NULL) {
 		strncpy ( ins->special, special, sizeof(ins->special) );
 	}
-	else {
-		/* If no special indications, we initialize to "." */
-		strncpy ( ins->special, ".", sizeof(ins->special) );
-	}
 	
 	
 	return ins;
+}
+
+/**
+ * @param s The binary string to analyse
+ * @return an unsigned int as a result
+ * @brief Convert a binary string to an unsigned integer
+ *
+ */
+
+
+unsigned int binaryToInt( char* start ) {
+	unsigned int total = 0;
+	
+	while (*start)
+	{
+		total <<= 1;
+   		if (*start++ == '1') total^=1;
+	}
+	
+	return total;
 }
 
 
@@ -155,53 +184,57 @@ inst makeInst( char* name, char* op, char* type, char* operand, char* special ) 
 unsigned int decodeInstruction( chain ch, inst * instSet ) {
 	
 	int i = 0;
-	char code[33];
-	code[32] = '\0';
+	unsigned int code = 0;
 	
 	/* We start by verifying the size of int */
 	if ( sizeof( int ) == 4 ) {
 	
 		/* init */
 		
-		chain in;
+		chain in = ch;
 		lex l;
-		in = ch;
 		
 		if (in != NULL) {
+		
+			/* /1\ If the chain is well constructed, we can read lexeme */
 			l = read_lex( in );
+			
 			if ( l != NULL ) {
 				
 				/* The function work here */
 				
-				while (instSet[i] != NULL && strncmp( l->this.value, instSet[i]->name, sizeof( instSet[i]->name) )) {
-					
-					i++;
+				i = hash( l->this.value, 1000);
+				WARNING_MSG("Decode error : Symbol %s / %d", l->this.value, i);
+				
+				if ( instSet[i] == NULL || strcmp( instSet[i]->name, l->this.value)) {
+					majuscule(l->this.value);
+					i = hash( l->this.value, 1000);
+					if ( instSet[i] == NULL || strcmp( instSet[i]->name, l->this.value)) {
+						ERROR_MSG("Decode error : can not decode the symbol %s (In upper case neither)", l->this.value);
+					}
 				}
-				
-				WARNING_MSG("Match ! IS = %s and input = %s", instSet[i]->name, l->this.value);
-				
-				
-				
-				
-			
-			
-			
-			
 			
 			}
 			
 			
 			
-			/* The type of instruction permit to verify the arguments */
+			/* /2\ The type of instruction permit to verify the arguments */
+			
+			/* FROM right to left. ALSO, DO NOT CHANGE ORDER of rd, rs ... By this mecanism we test each lexeme in teh good order ! */
 			
 			if (instSet[i]->type == R) {
 				
-				/* Operand init */
-				char * zero = "00000";
+				/* /!\ STRUCTURE /!\ */
 				
-				strncpy( code, "000000", 6);
+				/* |SPECIAL|rs|rt|rd|sa|Opcode| */
+			
+				/* /!\ First, we add the opcode /!\ */
+				
+				/* Opcode 6 bits */
+				code = instSet[i]->op;
 				
 				/* /!\ Verification of operands is done there /!\ */
+				
 				
 				/* rd */
 				if ( atoi(&instSet[i]->operand[2]) ){
@@ -209,11 +242,8 @@ unsigned int decodeInstruction( chain ch, inst * instSet ) {
 					in = read_line( in );
 					l = read_lex( in ); 
 					
-					strncpy(code + 16, registerToBinary(l->this.value), 5);
+					code = code + (registerToInt(l->this.value) << 11);
 					
-				}
-				else {
-					strncpy(code + 16, zero, 5);
 				}
 				
 				/* rs */
@@ -222,14 +252,8 @@ unsigned int decodeInstruction( chain ch, inst * instSet ) {
 					in = read_line( in );
 					l = read_lex( in ); 
 					
-					strncpy( code + 6, registerToBinary(l->this.value), 5);
+					code = code + (registerToInt(l->this.value) << 21);
 				}
-				else {
-					strncpy(code + 6, zero, 5);
-				}
-				
-				
-				
 				
 				/* rt */
 				if ( atoi(&instSet[i]->operand[1]) ){
@@ -237,15 +261,8 @@ unsigned int decodeInstruction( chain ch, inst * instSet ) {
 					in = read_line( in );
 					l = read_lex( in ); 
 					
-					strncpy(code + 11, registerToBinary(l->this.value), 5);
+					code = code + (registerToInt(l->this.value) << 16);
 				}
-				else {
-					strncpy(code + 11, zero, 5);
-				}
-				
-				
-				
-				
 				
 				/* sa */
 				if ( atoi(&instSet[i]->operand[3]) ){
@@ -253,25 +270,24 @@ unsigned int decodeInstruction( chain ch, inst * instSet ) {
 					in = read_line( in );
 					l = read_lex( in ); 
 					
-					strncpy(code + 21, registerToBinary(l->this.value), 5);
-				}
-				else {
-					strncpy( code + 21, zero, 5);
+					code = code + (registerToInt(l->this.value) << 6);
 				}
 				
-				/* Finally, we add the operation code */
 				
-				strncpy( code + 26,  instSet[i]->op,  6);
-				
-				/* Conversion string -> int, and me return int */
-				
+				/* /!\ END /!\ */
 				
 			}
 			else if ( instSet[i]->type == I ) {
-			
-				char * zero = "00000";
 				
-				strncpy( code, instSet[i]->op,  6);
+				/* /!\ STRUCTURE /!\ */
+				
+				/* |Opcode|rs|rt|offset| */
+				
+				/* /!\ Finally, we add the opcode /!\ */
+				
+				/* Opcode 6 bits */
+				
+				code = instSet[i]->op << 26;
 				
 				/* rt */
 				if ( atoi(&instSet[i]->operand[1]) ){
@@ -279,14 +295,8 @@ unsigned int decodeInstruction( chain ch, inst * instSet ) {
 					in = read_line( in );
 					l = read_lex( in ); 
 					
-					strncpy(code + 11, registerToBinary(l->this.value), 5);
+					code = code + (registerToInt(l->this.value) << 16);
 				}
-				else {
-					strncpy(code + 11, zero, 5);
-				}
-				
-				
-				
 				
 				
 				/* rs */
@@ -295,42 +305,92 @@ unsigned int decodeInstruction( chain ch, inst * instSet ) {
 					in = read_line( in );
 					l = read_lex( in ); 
 					
-					strncpy(code + 6, registerToBinary(l->this.value), 5);
+					code = code + (registerToInt(l->this.value) << 21);
 				}
-				else {
-					strncpy(code + 6, zero, 5);
-				}
-				
-				
-			
-				
-				
-				
 				
 				/* offset */
 				if ( atoi(&instSet[i]->operand[2]) ){
 				
 					in = read_line( in );
+					l = read_lex( in );
+					
+					code = code + registerToInt(l->this.value);
+					
+				}
+				
+				
+				/* /!\ END /!\ */
+				
+			}
+			else if ( instSet[i]->type == IB ) {
+				
+				/* /!\ STRUCTURE /!\ */
+				
+				/* |Opcode|rs|rt|offset| */
+				
+				/* /!\ First, we add the opcode /!\ */
+				
+				/* Opcode 6 bits */
+				
+				code = instSet[i]->op << 26;
+			
+				
+				/* rt */
+				if ( atoi(&instSet[i]->operand[1]) ){
+				
+					in = read_line( in );
 					l = read_lex( in ); 
 					
-					strncpy(code + 16, registerToBinary(l->this.value), 16);
+					code = code + (registerToInt(l->this.value) << 16);
 				}
-				else {
-					strncpy(code + 16, zero, 16);
+				
+				/* offset */
+				if ( atoi(&instSet[i]->operand[2]) ){
+				
+					in = read_line( in );
+					l = read_lex( in );
+					
+					code = code + registerToInt(l->this.value);
+					
 				}
+				
+				
+				/* rs */
+				if ( atoi(&instSet[i]->operand[0]) ){
+				
+					in = read_line( in );
+					l = read_lex( in ); 
+					
+					code = code + (registerToInt(l->this.value) << 21);
+				}
+				
+				
+				/* /!\ END /!\ */
 				
 			}
 			else if ( instSet[i]->type == J ) {
-			
-				strncpy( code, instSet[i]->op, 6);
 				
+				/* /!\ STRUCTURE /!\ */
+				
+				/* |Opcode|offset| */
+				
+				/* /!\ First, we add the opcode /!\ */
+				
+				/* Opcode 6 bits */
+				
+				code = instSet[i]->op << 26;
+				
+				/* Offset */
 				if ( atoi(&instSet[i]->operand[0]) ){
 					
 					in = read_line( in );
 					l = read_lex( in ); 
 					
-					strncpy(code + 6, registerToBinary(l->this.value), 26);
+					code = code + registerToInt(l->this.value);
 				}
+				
+				/* /!\ END /!\ */
+				
 			}
 			
 			
@@ -338,15 +398,14 @@ unsigned int decodeInstruction( chain ch, inst * instSet ) {
 		}
 	}
 	else {
-		ERROR_MSG("Critical error, size of int is not 4 bytes.");
+		ERROR_MSG("Critical error : size of int is not 4 bytes (Please verify if your system is running in 32/64 bits).");
 	}
 	
 	
 	/* Conversion string -> int, and we return int */
-	WARNING_MSG("%s", code);
+	WARNING_MSG("Decoded code : %X", code);
 	
-	return (int) strtol(code, NULL, 2);
-
+	return code;
 }
 
 /**
@@ -402,7 +461,7 @@ void decodeDirective( chain ch, char * tab ) {
 		if (directive != NULL) { /* If the chain is well built, it is not mandatory to verify if lex is NULL */
 			l = read_lex( directive );
 			
-			int n = l->this.digit.this.integer; /* Number of uninitialized bytes */
+			int n = l->this.digit->this.integer; /* Number of uninitialized bytes */
 			for (i=0; i<n; i++) {
 				tab[i] = 0;
 			}
@@ -420,26 +479,68 @@ void decodeDirective( chain ch, char * tab ) {
 
 
 /**
- * @return A translated string of register name
- * @brief this routine convert a char of a specified register to his binary equivalent.
+ * @return unsigned int to be construct to build the decode code.
+ * @brief this routine convert a char of a specified register to his int equivalent.
  *
  */
 
-char* registerToBinary( char *input ) {
-
-	char * reg = malloc( sizeof(char) * 6);
-	int t, i;
-	reg[5]='\0';
-	t = (atoi ( input+1) );
+unsigned int registerToInt( char *input ) {
 	
-	if ( t <32 ) {
-		for ( i=0; i<5; i++) {
-			reg[4-i] = t % 2 +'0';
-			t = t >> 1;
-		}
+	/* TODO make it more robust */
+	
+	unsigned int t = 0;
+	if ( strcmp( input+1, "zero" ) ) {
+		t = 0;
+	}
+	else if ( strcmp( input+1, "at" ) ) {
+		t = 1;
+	}
+	else if ( strcmp( input+1, "gp" ) ) {
+		t = 28;
+	}
+	else if ( strcmp( input+1, "sp" ) ) {
+		t = 29;
+	}
+	else if ( strcmp( input+1, "fp" ) ) {
+		t = 30;
+	}
+	else if ( strcmp( input+1, "ra" ) ) {
+		t = 31;
 	}
 	
-	return reg;
+	switch (input[1]) {
+		case 'v':
+			t = atoi(input+2) + 2;
+		break;
+		
+		case 'a':
+			t = atoi(input+2) + 4;
+		break;
+		
+		case 't':
+			if (atoi(input+2) < 8) t = atoi(input+2) + 8;
+			else t = atoi(input+2) + 16;
+				
+		break;
+		
+		case 's':
+			t = atoi(input+2) + 16;
+		break;
+		
+		case 'k':
+			t = atoi(input+2) + 16;
+		break;
+		
+		default:
+			t = atoi( input+1);
+		break;
+	}
+	
+	if (t > 31) {
+		ERROR_MSG("Decode error : one register is badly written");
+	}
+	
+	return t;
 	
 }
 
@@ -456,9 +557,11 @@ char* registerToBinary( char *input ) {
  * @brief This routine is used to fetch and decode if needed the input intruction. 
  */
  
- void fetch( chain ch, chain symTab, chain chCode, int * section, unsigned int * addr, inst * instSet ) {
+ void fetch( chain ch, chain symTab, chain chCode, int * section, unsigned int * addr, inst * instSet, unsigned int *nline ) {
  	chain element = ch;
  	lex l;
+ 	*section = TEXT;
+ 	*addr = 0;
  	
  	/* We read the line */
  	element = read_line( element );
@@ -472,7 +575,6 @@ char* registerToBinary( char *input ) {
 	 		if ( strncmp( l->this.value + 1, "text", 4 ) ) {
 	 			*section = TEXT;
 	 			*addr = 0;
-	 			WARNING_MSG("Here");
 	 		}
 	 		else if ( strncmp( l->this.value + 1, "data", 4 ) ) {
 	 			*section = DATA;
@@ -487,16 +589,18 @@ char* registerToBinary( char *input ) {
 	 			
 	 		}
 	 		else {
-	 			/* In other cases, launch decodeDirective and we increase the addr */
+	 		
+	 			/* In other cases, launch decodeDirective and we increase addr. Indeed, we manage here all other directives that record bytes : .word, .byte ... */
 	 			
-	 			/* We make an evaluation of directive. Indeed, the code may be larger than a word. In case of an instruction we have a word, the directive in more likely saved in a byte, i.e. a char */
+	 			/* The code may be larger than a word. The directive is saved byte by byte, i.e. a char (because it is the smallest data memory can manage. */
+	 			
 	 			unsigned int byte = 0;
 	 			
 	 			char result[STRLEN];
 	 			decodeDirective( element, result );
 	 			
 	 			while ( byte < strlen(result) ) {
-		 			addCode( chCode, 0, *addr, result[byte]);
+		 			addCode( chCode, 0, *addr, result[byte], nline );
 		 			*addr = *addr + 1; /* Address is incremented byte by byte */
 		 		}
 	 			
@@ -504,12 +608,15 @@ char* registerToBinary( char *input ) {
 	 		
 	 	}
 	 	else if ( l->type == LABEL ) {
-	 		/* Here, it is a label, we add it the symTab without forgetting some verifications ;). After that we launch fetch again to treat rest of the chain */
+	 		/* Here, it is a label, we add it to symTab without forgetting some verifications ;). After that, we launch fetch again to treat rest of the chain */
 	 		
-		 	addSymbol( l->this.value , symTab, *section, *addr );
+		 	addSymbol( l->this.value , symTab, *section, *addr, nline );
 		 	
 	 		if (read_line( element ) != NULL ) {
-		 		fetch( read_line( element ), symTab, chCode, section, addr, instSet );
+	 			
+	 			/* /!\ Recursive /!\ */
+	 			
+		 		fetch( element, symTab, chCode, section, addr, instSet, nline );
 		 		*addr = *addr + 4;
 		 	}
 		 	
@@ -518,10 +625,11 @@ char* registerToBinary( char *input ) {
 	 		/* The list is not empty, we are in the case of instruction */
 	 		
 	 		/* Add an element to code */
-	 		addCode( chCode, 0, *addr, decodeInstruction( element, instSet ) );
+	 		addCode( chCode, 0, *addr, decodeInstruction( element, instSet ), nline );
 	 		
 	 	}
 	}
+	WARNING_MSG("Here");
 	return;
  	
  }
@@ -540,7 +648,7 @@ char* registerToBinary( char *input ) {
  * - if section defined, add section and addr 
  */
 
-void addSymbol( char * value, chain symTab, int section, unsigned int addr ) {
+void addSymbol( char * value, chain symTab, int section, unsigned int addr, unsigned int *nline ) {
 	chain element = symTab;
 	symbol temp;
 	int match = 0;
@@ -562,7 +670,8 @@ void addSymbol( char * value, chain symTab, int section, unsigned int addr ) {
 		else {
 		
 			/* Create a new element of the chain and add the symbol */
-			element = add_chain_next( element );
+			element = add_chain_next( element, *nline );
+			*nline = *nline + 1;
 			element->this.sym = createSymbol( value, section, addr );
 		}
 	}
@@ -579,11 +688,14 @@ void addSymbol( char * value, chain symTab, int section, unsigned int addr ) {
 		if (!match) {
 		
 			/* Create a new element of the chain and add the symbol */
-			element = add_chain_next( element );
+			element = add_chain_next( element, *nline );
+			*nline = *nline + 1;
 			element->this.sym = createSymbol( value, section, addr );
 		}
 		
 	}
+	
+	return;
 }
 
 /**
@@ -629,7 +741,7 @@ symbol readSymbol( chain symElem ) {
  */
 
 symbol createSymbol(char * value,  int section, unsigned int addr ) {
-	symbol sym = malloc ( sizeof( symbol ) );
+	symbol sym = malloc ( sizeof( *sym ) );
 	
 	strcpy(sym->value , value);
 	sym->section = section;
@@ -647,8 +759,8 @@ symbol createSymbol(char * value,  int section, unsigned int addr ) {
  * @brief Create a code container
  */
 
-code createCode(unsigned int line, unsigned int addr, unsigned int value ) {
-	code c = malloc ( sizeof( code ) );
+code createCode( unsigned int addr, unsigned int value, unsigned int line ) {
+	code c = malloc ( sizeof( *c ) );
 	
 	c->line = line;
 	c->addr = addr;
@@ -665,11 +777,12 @@ code createCode(unsigned int line, unsigned int addr, unsigned int value ) {
  * @brief Add the code to the chain.
  */
 
-void addCode( chain chCode, unsigned int line, unsigned int addr, unsigned int value  ) {
+void addCode( chain chCode, unsigned int line, unsigned int addr, unsigned int value, unsigned int *nline  ) {
 	/* We add a new element in the chain code */
-	chCode = add_chain_next( chCode );
+	chCode = add_chain_next( chCode, *nline );
+	*nline = *nline + 1;
 	
-	chCode->this.c = createCode(line, addr, value);
+	chCode->this.c = createCode(addr, value, *nline);
 	return;
 }
 

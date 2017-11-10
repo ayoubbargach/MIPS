@@ -18,24 +18,22 @@
 
 void instructionSet( inst* );
 inst makeInst( char*, char*, char*, char*, char*  );
+unsigned int binaryToInt( char* s );
 
 unsigned int decodeInstruction( chain, inst *);
 void decodeDirective( chain, char * );
 
-char* registerToBinary( char * );
+unsigned int registerToInt( char * );
 
-/* enum sections */
-enum {UNDEFINED, TEXT, DATA, BSS};
+void fetch( chain, chain, chain, int*, unsigned int*, inst *, unsigned int * ); 
 
-void fetch( chain, chain, chain, int*, unsigned int*, inst *  ); 
-
-void addSymbol( char * , chain, int  , unsigned int  );
+void addSymbol( char * , chain, int , unsigned int, unsigned int * );
 symbol findSymbol( char * , chain);
 symbol readSymbol( chain );
 symbol createSymbol(char * ,  int, unsigned int );
 
 code createCode(unsigned int, unsigned int, unsigned int );
-void addCode( chain, unsigned int, unsigned int, unsigned int  );
+void addCode( chain, unsigned int, unsigned int, unsigned int, unsigned int * );
 
 
 #endif /* _SYN_H_ */

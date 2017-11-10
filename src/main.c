@@ -167,8 +167,7 @@ int main ( int argc, char *argv[] ) {
     
     
     /* Generate the instruction set tab */
-
-	inst instSet[1000];
+	inst instSet[1000] = {NULL};
     instructionSet(instSet);
     
     /* We make the symTab collection */
@@ -177,10 +176,24 @@ int main ( int argc, char *argv[] ) {
     /* Some basic variables */
     int section = UNDEFINED;
     unsigned int addr = 0;
+    unsigned int line = 0;
     
     /* We make the code collection */
     chain chCode = make_collection();
-    chain c = chCode;
+    
+    
+    /* We create an array ro reach easily the starting point */
+    chain * c[3] = {&ch, &symTab, &chCode};
+    
+    
+    /* We fetch each line */
+    while ( ch != NULL && read_line( ch ) != NULL ) {
+    	fetch(ch, symTab, chCode, &section, &addr, instSet, &line);
+    	
+    	ch = next_line( ch );
+    }
+    
+    
     
     
     

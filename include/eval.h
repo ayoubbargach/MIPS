@@ -14,6 +14,6 @@
 #include <stdio.h>
 #include <global.h>
 
-
+unsigned int eval( lex );
 
 #endif /* _EVAL_H_ */

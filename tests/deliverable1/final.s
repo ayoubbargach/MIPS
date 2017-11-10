@@ -9,7 +9,7 @@ boucle:
     BEQ $t0 , $t1 , byebye
     NOP
     addi $t1 , $t1 , 1
-    B boucle 
+    J boucle 
     NOP
 byebye:JAL viteviteauru
 .data
