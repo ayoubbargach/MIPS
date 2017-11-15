@@ -629,12 +629,15 @@ unsigned int registerToInt( char *input ) {
 	 		
 	 	}
 	}
-	WARNING_MSG("Here");
+	
 	return;
  	
  }
  
+ 
 
+ 
+/* ##### Symbol functions ##### */
 
 
 /**
@@ -750,6 +753,8 @@ symbol createSymbol(char * value,  int section, unsigned int addr ) {
 	return sym;
 }
 
+
+/* ##### Code functions ##### */
 
 /**
  * @param line The line of the code. Can be used to final display. (Is like an ID)

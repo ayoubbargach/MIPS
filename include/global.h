@@ -74,9 +74,12 @@ enum {UNSIGNED, SIGNED};
 
 enum {R, I, J, IB};
 
-/* enum sections */
+/* Sections */
 enum {UNDEFINED, TEXT, DATA, BSS};
 
+enum { LIST_MODE, OBJECT_MODE, ELF_MODE, TEST_MODE };
+
+enum { NONE, R_MIPS_32, R_MIPS_26, R_MIPS_HI16, R_MIPS_LO16 };
 
 
 /*!
@@ -162,6 +165,9 @@ typedef struct rel_t {
 	/* Target symbol */
 	symbol sym;
 	
+	/* Target code : Used to update code */
+	code * c;
+	
 	/* Symbol to relocate */
 	char value[STRLEN];
 	
@@ -184,6 +190,7 @@ typedef struct chain_t {
 		inst bottom_ins;
 		symbol sym;
 		code c;
+		rel r;
 	}this;
 } *chain;
 
@@ -192,6 +199,9 @@ typedef struct chain_t {
  */
 
 extern int testID;
+extern int section;
+extern unsigned int addr;
+extern unsigned int line;
 
 #endif /* _GLOBAL_H */
 

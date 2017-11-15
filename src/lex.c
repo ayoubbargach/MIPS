@@ -190,7 +190,6 @@ void lex_load_file( char *file, unsigned int *nlines, chain ch ) {
 
     fp = fopen( file, "r" );
     if ( NULL == fp ) {
-        /*macro ERROR_MSG : message d'erreur puis fin de programme ! */
         ERROR_MSG("Error while trying to open %s file --- Aborts",file);
     }
 

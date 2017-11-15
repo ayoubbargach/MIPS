@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015/Debian) (preloaded format=pdflatex 2017.8.23)  9 NOV 2017 14:17
+This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015/Debian) (preloaded format=pdflatex 2017.8.23)  15 NOV 2017 20:51
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -575,52 +575,57 @@ File: lstlang1.sty 2015/06/04 1.6 listings language file
 (/usr/share/texlive/texmf-dist/tex/latex/listings/lstmisc.sty
 File: lstmisc.sty 2015/06/04 1.6 (Carsten Heinz)
 ) [3] [4]
-Overfull \hbox (4.99983pt too wide) in paragraph at lines 375--376
+Overfull \hbox (4.99983pt too wide) in paragraph at lines 381--382
 [][][][][][][][][][][][][][][][][][][][][][][] 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 435--436
+Underfull \hbox (badness 10000) in paragraph at lines 443--444
 []\T1/pplx/m/n/10 (+20) Compare
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 435--436
+Underfull \hbox (badness 10000) in paragraph at lines 443--444
 \T1/pplx/m/n/10 (+20) in-put and
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 435--436
+Underfull \hbox (badness 10000) in paragraph at lines 443--444
 \T1/pplx/m/n/10 (+20) out-put of
  []
 
 
-Overfull \hbox (5.01088pt too wide) in paragraph at lines 435--436
+Overfull \hbox (5.01088pt too wide) in paragraph at lines 443--444
 \T1/pplx/m/n/10 (-20) lex_standarise
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 437--438
+Underfull \hbox (badness 10000) in paragraph at lines 445--446
 []\T1/pplx/m/n/10 (+20) Dump the
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 437--438
+Underfull \hbox (badness 10000) in paragraph at lines 445--446
 \T1/pplx/m/n/10 (+20) the first
  []
 
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 450.
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 458.
 [5pdfTeX warning (ext4): destination with the same identifier (name{cite.RISC})
  has been already used, duplicate ignored
 
 \AtBegShi@Output ...ipout \box \AtBeginShipoutBox 
                                                   \fi \fi 
-l.450 \end{document}
-                    ]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 450.
+l.458 \end{document}
+                    ] [6
+
+]
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 458.
  (./doc.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 450.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 450.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 458.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 458.
 Package rerunfilecheck Info: File `doc.out' has not changed.
 (rerunfilecheck)             Checksum: 8931075725CFF370D0F91ABA5655EA1F;1210.
 
@@ -630,16 +635,16 @@ LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
 LaTeX Warning: There were multiply-defined labels.
 
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 450.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 458.
  ) 
 Here is how much of TeX's memory you used:
- 10790 strings out of 493029
- 165126 string characters out of 6136234
- 312745 words of memory out of 5000000
+ 10795 strings out of 493029
+ 165167 string characters out of 6136234
+ 311746 words of memory out of 5000000
  13895 multiletter control sequences out of 15000+600000
- 61401 words of font info for 234 fonts, out of 8000000 for 9000
+ 61624 words of font info for 237 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 36i,10n,51p,752b,1374s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 36i,10n,51p,752b,1005s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/share/texlive/texmf-dist/fonts/enc/dvips/base/8r.enc}</usr/share/texliv
 e/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/share/texlive/texm
 f-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share/texlive/texmf-dist/
@@ -647,10 +652,10 @@ fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/share/texlive/texmf-dist/fonts/
 type1/public/fpl/fplrc8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/pal
 atino/uplb8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/palatino/uplr8a
 .pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/palatino/uplri8a.pfb>
-Output written on doc.pdf (5 pages, 111912 bytes).
+Output written on doc.pdf (6 pages, 113039 bytes).
 PDF statistics:
- 199 PDF objects out of 1000 (max. 8388607)
- 183 compressed objects within 2 object streams
- 71 named destinations out of 1000 (max. 500000)
+ 203 PDF objects out of 1000 (max. 8388607)
+ 186 compressed objects within 2 object streams
+ 72 named destinations out of 1000 (max. 500000)
  52897 words of extra memory for PDF output out of 61914 (max. 10000000)
 

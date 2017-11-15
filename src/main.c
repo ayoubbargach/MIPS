@@ -15,12 +15,16 @@
 #include <notify.h>
 #include <lex.h>
 #include <syn.h>
+#include <print.h>
 #include <functions.h>
 
 
 
 /* Extern variable definition */
 int testID = 0;
+int section = UNDEFINED;
+unsigned int addr = 0;
+unsigned int line = 0;
 
 /**
  * @param exec Name of executable.
@@ -65,8 +69,7 @@ int main ( int argc, char *argv[] ) {
     /* Options Management */
 
     int opt;
-    
-    enum { LIST_MODE, OBJECT_MODE, ELF_MODE, TEST_MODE } mode = ELF_MODE;
+    int mode = ELF_MODE;
     
 	while ((opt = getopt(argc, argv, "lbrt")) != -1) {
         switch (opt) {
@@ -173,17 +176,15 @@ int main ( int argc, char *argv[] ) {
     /* We make the symTab collection */
     chain symTab = make_collection();
     
-    /* Some basic variables */
-    int section = UNDEFINED;
-    unsigned int addr = 0;
-    unsigned int line = 0;
-    
     /* We make the code collection */
     chain chCode = make_collection();
     
+    /* We make the relocation table collection */
+    chain r = make_collection();
+    
     
     /* We create an array ro reach easily the starting point */
-    chain * c[3] = {&ch, &symTab, &chCode};
+    chain * c[4] = {&ch, &symTab, &chCode, &r};
     
     
     /* We fetch each line */
@@ -193,8 +194,11 @@ int main ( int argc, char *argv[] ) {
     	ch = next_line( ch );
     }
     
+    /* SOLVE section */
     
+    /* PRINT section */
     
+    print( c, mode, nlines, file );
     
     
     

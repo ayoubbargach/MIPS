@@ -14,6 +14,11 @@
 #include <stdio.h>
 #include <global.h>
 
-unsigned int eval( lex );
+rel createRel( unsigned int addr, int type, char * value, symbol sym );
+void addRel( chain r,  unsigned int addr, int type, char * value, symbol sym, unsigned int *nline  )
+
+unsigned int eval( lex, int, chain, chain, int, unsigned int, unsigned int * );
+
+void solve( chain symTab, chain chCode, chain r );
 
 #endif /* _EVAL_H_ */
