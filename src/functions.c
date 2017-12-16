@@ -1,7 +1,7 @@
 
 /**
  * @file functions.c
- * @author François Portet <francois.portet@imag.fr> from François Cayre
+ * @author Ayoub Bargach <ayoub.bargach@phelma.grenoble-inp.fr>
  * @brief Some functions to manage collections ...
  */
  
@@ -25,8 +25,7 @@
  * The different kinds of lexemes are indexed in enum in global.h
  *
  */
- 
-chain make_collection ( void ) {
+chain make_collection( void ) {
 	chain ch = malloc( sizeof( *ch ));
 
 	/* Error Management */
@@ -35,7 +34,7 @@ chain make_collection ( void ) {
     }
 
 	/* Init */
-	ch->line = 1;
+	ch->line = 0;
 	ch->next = NULL;
 	ch->this.bottom = NULL;
 
@@ -49,8 +48,7 @@ chain make_collection ( void ) {
  * For each element we add using this function, we are managing to add a lexeme. (It symbolize a line)
  *
  */
- 
-chain add_chain_next( chain parent, int nline ) {
+chain add_chain_next( chain parent ) {
 	chain ch = malloc( sizeof( *ch ));
 
 	/* Error Management */
@@ -60,9 +58,8 @@ chain add_chain_next( chain parent, int nline ) {
     
 
 	/* Init */
-
 	parent->next = ch;
-	ch->line = nline;
+	ch->line = line;
 	ch->next = NULL;
 	ch->this.bottom = NULL;
 
@@ -76,7 +73,7 @@ chain add_chain_next( chain parent, int nline ) {
  *
  */
  
-chain add_chain_newline( chain parent, int nline ) {
+chain add_chain_bottom( chain parent ) {
 	chain ch = malloc( sizeof( *ch ));
 
 	/* Error Management */
@@ -88,7 +85,7 @@ chain add_chain_newline( chain parent, int nline ) {
 	/* Init */
 
 	parent->this.bottom = ch;
-	ch->line = nline;
+	ch->line = line;
 	ch->next = NULL;
 	ch->this.bottom = NULL;
 
@@ -107,6 +104,7 @@ chain add_chain_newline( chain parent, int nline ) {
  * @brief Simple function to make a digit.
  *
  */
+
 digit make_digit( void ) {
 	digit dig = malloc( sizeof( *dig ) );
 	
@@ -121,11 +119,10 @@ digit make_digit( void ) {
 /**
  * @param octalNumber From atoi function
  * @return The converted octal number
- * @brief This function convert an octal number to an int
+ * @brief This function convert an octal number to an int. An octal written as int type is smaller than an int.
+ * No Segfault will occur.
  *
  */
-
-/* TODO Made it robust => can occur in segfault ? */
 
 int OctalToDecimal(int octalNumber)
 {
@@ -148,7 +145,7 @@ int OctalToDecimal(int octalNumber)
  * @param type Explicit type of lexeme.
  * @return The lex structure ( a pointer !)
  * @brief Useful to create fastly a lexeme of a kind of type. All the type are explicited in global.h by enum.
- * After that, we fill the structure with the value of lexeme.
+ * If there is an immediate value, it will be directly evaluated.
  *
  */
 
@@ -162,67 +159,93 @@ lex make_lex( unsigned int type, char * value, int sign ) {
     
 	l->type = type;
 	
-	if ( type == DECIMAL && type == OCTO && type == HEXA ) {
-		digit dig = make_digit();
+	if (sign == SIGNED) { /* We eat '-', but not mandatory because strtol manages '-' in fact */
+		value++;
+	}
 	
-		switch (type) {
-			case DECIMAL_ZERO:
-				dig->type = DECIMAL_ZERO;
-				dig->sign = sign;
-				dig->this.integer = 0;
-				
-				dig->value = 0;
-				
-				l->this.digit = dig;
-				
-				break;  
-			case DECIMAL:
-				dig->type = DECIMAL;
-				dig->sign = sign;
-				dig->this.integer = atoi( value );
-				
-				if( sign == SIGNED )
-					dig->value = ~ OctalToDecimal(dig->this.integer) + 1; /* NOT(a) + 1 // Complement of 2 */
-				else dig->value = OctalToDecimal(dig->this.integer);
-				
-				l->this.digit = dig;
-				
-				break;  
-					  			
-			case OCTO:
-				dig->type = OCTO;
-				dig->sign = sign;
-				dig->this.octo = atoi( value );
-				
-				if( sign == SIGNED )
-					dig->value = ~ dig->this.integer + 1; /* NOT(a) + 1 // Complement of 2 */
-				else dig->value = dig->this.integer;
-				
-				l->this.digit = dig;
-				
-				break; 
-					  			
-			case HEXA:
-				dig->type = HEXA;
-				dig->sign = sign;
-				dig->this.hexa = value;
-				
-				if( sign == SIGNED )
-					dig->value = ~ (int)strtol(value, NULL, 0) + 1; /* NOT(a) + 1 // Complement of 2 */
-				else dig->value = (int)strtol(value, NULL, 0);
-				
-				
-				l->this.digit = dig;
-				
-				break;
-					 			
-			default :
-				break;
-		}
+	
+	digit dig = make_digit();
+
+	switch (type) {
+		case DECIMAL_ZERO:
+			dig->type = DECIMAL_ZERO;
+			dig->sign = sign;
+			dig->this.integer = 0;
+			
+			dig->value = 0;
+			
+			l->this.digit = dig;
+			
+			break; 
+			
+		case BIT:
+			dig->type = BIT;
+			dig->sign = sign;
+			dig->this.integer = binaryToInt( value );
+			
+			if( sign == SIGNED )
+				dig->value = ~ dig->this.integer + 1; /* NOT(a) + 1 // Complement of 2 */
+			else dig->value = dig->this.integer;
+			
+			l->this.digit = dig;
+			
+			break; 
+			
+		case DECIMAL:
+			dig->type = DECIMAL;
+			dig->sign = sign;
+			dig->this.integer = atoi( value );
+			
+			if( sign == SIGNED )
+				dig->value = ~ dig->this.integer + 1; /* NOT(a) + 1 // Complement of 2 */
+			else dig->value = dig->this.integer;
+			
+			l->this.digit = dig;
+			
+			break;  
+				  			
+		case OCTO:
+			dig->type = OCTO;
+			dig->sign = sign;
+			dig->this.octo = atoi( value );
+			
+			if( sign == SIGNED )
+				dig->value = ~ OctalToDecimal(dig->this.integer) + 1; /* NOT(a) + 1 // Complement of 2 */
+			else dig->value = OctalToDecimal(dig->this.integer);
+			
+			l->this.digit = dig;
+			
+			break; 
+				  			
+		case HEXA:
+			dig->type = HEXA;
+			dig->sign = sign;
+			dig->this.hexa = value;
+			
+			if( sign == SIGNED )
+				dig->value = ~ (int)strtol(value, NULL, 0) + 1; /* NOT(a) + 1 // Complement of 2 */
+			else dig->value = (int)strtol(value, NULL, 0);
+			
+			l->this.digit = dig;
+			
+			break;
+			
+		case REGISTER:
+			dig->type = REGISTER;
+			dig->sign = sign;
+			
+			dig->value = registerToInt(value);
+			
+			
+			l->this.digit = dig;
+			
+			break;
+				 			
+		default :
+			strncpy ( l->this.value, value, sizeof(l->this.value) );
+			break;
 	}
-	else {
-		strncpy ( l->this.value, value, sizeof(l->this.value) );
-	}
+	
 	
 	return l;
 }
@@ -239,6 +262,99 @@ void add_lex( chain parent, lex l ) {
 	parent->this.bottom_lex = l;
 	
 	return;
+}
+
+/**
+ * @return unsigned int to be construct to build the decode code.
+ * @brief this routine convert a char of a specified register to his int equivalent.
+ *
+ */
+
+unsigned int registerToInt( char *input ) {
+	
+	unsigned int t = 0;
+	
+	if ( input[0] == '$' ) {
+		if ( !strcmp( input+1, "zero" ) ) {
+			t = 0;
+		}
+		else if ( !strcmp( input+1, "at" ) ) {
+			t = 1;
+		}
+		else if ( !strcmp( input+1, "gp" ) ) {
+			t = 28;
+		}
+		else if ( !strcmp( input+1, "sp" ) ) {
+			t = 29;
+		}
+		else if ( !strcmp( input+1, "fp" ) ) {
+			t = 30;
+		}
+		else if ( !strcmp( input+1, "ra" ) ) {
+			t = 31;
+		}
+		else {
+			switch (input[1]) {
+				case 'v':
+					t = atoi(input+2) + 2;
+				break;
+	
+				case 'a':
+					t = atoi(input+2) + 4;
+				break;
+	
+				case 't':
+					if (atoi(input+2) < 8) t = atoi(input+2) + 8;
+					else t = atoi(input+2) + 16;
+			
+				break;
+	
+				case 's':
+					t = atoi(input+2) + 16;
+				break;
+	
+				case 'k':
+					t = atoi(input+2) + 16;
+				break;
+	
+				default:
+					t = atoi( input+1);
+				break;
+			}
+		}
+		
+	}
+	else {
+		t = binaryToInt( input );
+	}
+	
+	
+	if (t > 31) {
+		ERROR_MSG("Decode error : one register is badly written. Please check source code or instSet.txt");
+	}
+	
+	return t;
+	
+}
+
+/**
+ * @param s The binary string to analyse
+ * @return an unsigned int as a result
+ * @brief Convert a binary string to an unsigned integer
+ *
+ */
+
+
+unsigned int binaryToInt( char* start ) {
+	unsigned int total = 0;
+	
+	while (*start)
+	{
+		total <<= 1;
+   		if (*start++ == '1') total^=1;
+	}
+	
+	return total;
 }
 
 
@@ -270,7 +386,7 @@ lex read_lex( chain parent ) {
  *
  */
  
-chain read_line( chain parent ) {
+chain read_next( chain parent ) {
 	
 	if( parent->next != NULL ) {
 		return parent->next;
@@ -287,9 +403,9 @@ chain read_line( chain parent ) {
  *
  */
  
-chain next_line( chain parent ) {
+chain read_bottom( chain parent ) {
 	
-	if( parent->next != NULL ) {
+	if( parent->this.bottom != NULL ) {
 		return parent->this.bottom;
 	}
 	

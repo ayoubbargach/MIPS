@@ -1,9 +1,10 @@
 
 /**
  * @file main.c
- * @author François Portet <francois.portet@imag.fr> from François Cayre
+ * @author Bargach Ayoub <ayoub.bargach@phelma.grenoble-inp.fr> from François Portet <francois.portet@imag.fr> and François Cayre
  * @brief Main entry point for MIPS assembler.
  */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -13,10 +14,13 @@
 
 #include <global.h>
 #include <notify.h>
+
+
+#include <functions.h>
 #include <lex.h>
+#include <inst.h>
 #include <syn.h>
 #include <print.h>
-#include <functions.h>
 
 
 
@@ -24,7 +28,7 @@
 int testID = 0;
 int section = UNDEFINED;
 unsigned int addr = 0;
-unsigned int line = 0;
+unsigned int line = 1;
 
 /**
  * @param exec Name of executable.
@@ -65,8 +69,7 @@ int main ( int argc, char *argv[] ) {
        puis la sortie du programme avec un code erreur non nul (EXIT_FAILURE) */
 	/* ERROR_MSG("Erreur. Arret du programme"); */
     
-    /* TODO  make it more robust */
-    /* Options Management */
+    /* ---------------- Options Management -------------------*/
 
     int opt;
     int mode = ELF_MODE;
@@ -125,15 +128,29 @@ int main ( int argc, char *argv[] ) {
         fprintf( stderr, "Missing ASM source file, aborting.\n" );
         exit( EXIT_FAILURE );
     }
-
-
-
-    /* ---------------- do the lexical analysis -------------------*/
+    
+    /* ---------------- init all collections -------------------*/
     
     /* We create a collection used to contruct the tree of lexemes */ 
-    chain ch = make_collection();
+    chain chLex = make_collection();
     
-    lex_load_file( file, &nlines, ch );
+    /* We make the symTab collection */
+    chain symTab = make_collection();
+    
+    /* We make the code collection */
+    chain chCode = make_collection();
+    
+    /* We make the relocation table collection */
+    chain chRel = make_collection();
+    
+    /* We create an array ro reach easily the starting point */
+    chain source[4] = {chLex, symTab, chCode, chRel};
+    chain * c[4] = {&chLex, &symTab, &chCode, &chRel};
+    
+    
+    /* ---------------- do the lexical analysis -------------------*/
+    
+    lex_load_file( file, &nlines, chLex );
     
     /* ---- TEST 2 ---- */
 
@@ -141,12 +158,12 @@ int main ( int argc, char *argv[] ) {
     
     if (testID == 2) {
     
-		chain chcopy = ch;
+		chain chcopy = chLex;
 		chain in;
 		
 		while (  chcopy != NULL ) {
 			in = chcopy;
-			in = read_line( in );
+			in = read_next( in );
 			
 			if ( in != NULL ) {
 				DEBUG_MSG("Line %d", in->line );
@@ -157,48 +174,45 @@ int main ( int argc, char *argv[] ) {
 						WARNING_MSG("%s", state_to_string( read_lex(in)->type ) );
 					}
 			
-					in = read_line( in );
+					in = read_next( in );
 				} while ( in != NULL );
 			
 				DEBUG_MSG("[NL]");
 			}
 			
-			chcopy = next_line( chcopy );
+			chcopy = read_bottom( chcopy );
 			
 		}
     }
     
+    /* ---------------- init instruction set - See inst.h -------------------*/
     
     /* Generate the instruction set tab */
 	inst instSet[1000] = {NULL};
     instructionSet(instSet);
     
-    /* We make the symTab collection */
-    chain symTab = make_collection();
-    
-    /* We make the code collection */
-    chain chCode = make_collection();
-    
-    /* We make the relocation table collection */
-    chain r = make_collection();
-    
-    
-    /* We create an array ro reach easily the starting point */
-    chain * c[4] = {&ch, &symTab, &chCode, &r};
+    /* ---------------- do the syntactic analysis - See syn.h -------------------*/
     
     
     /* We fetch each line */
-    while ( ch != NULL && read_line( ch ) != NULL ) {
-    	fetch(ch, symTab, chCode, &section, &addr, instSet, &line);
+    while ( chLex != NULL && read_next( chLex ) != NULL ) {
+    	fetch(c, instSet);
     	
-    	ch = next_line( ch );
+    	chLex = read_bottom( chLex );
+    	
+    	/* WARNING_MSG("Type => %p", chLex );
+    	
+    	lex l = read_lex( read_next( chLex ));
+    	
+    	WARNING_MSG("Type => %s", state_to_string(l->type)); */
     }
     
-    /* SOLVE section */
+    /* SOLVE relocations section */
     
-    /* PRINT section */
-    
-    print( c, mode, nlines, file );
+
+
+    /* ---------------- print results - See print.h -------------------*/
+    print( source, mode, nlines, file );
     
     
     

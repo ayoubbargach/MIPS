@@ -64,6 +64,8 @@
 
 \usepackage[toc,page]{appendix} % To manage appendix
 
+\usepackage{graphicx} % To add pictures
+
 %----------------------------------------------------------------------------------------
 %	TITLE SECTION
 %----------------------------------------------------------------------------------------
@@ -85,7 +87,7 @@
 \date{\today} % Leave empty to omit a date
 \renewcommand{\maketitlehookd}{%
 \begin{abstract}
-\noindent This documentation aim to explicit the way the MIPS assembly have been built. This project have been followed through my education in Phelma - Grenoble INP. A basic source files have been written by François Portet and François Cayre. The project goal is to build a complete assembler in C language. All is open source in my github. You will find there all the information step by step in how all of this program is written. From structure to code, you will find a lot of explanation of how an assembler is built. A special thanks to all the professor team who takes time to help us when we are in need.
+\noindent This documentation aim to explicit the way the MIPS assembly have been built. This project have been followed through my education in Phelma - Grenoble INP. A basic source files have been written by Francois Portet and Francois Cayre. The project goal is to build a complete assembler in C language. The biggest part is open source in my github. Due to lack of information about initial code license, formatting files have been deleted. I'm working on creating a more visual interface for education purposes. From structure to code, you will find a lot of explanation of how an assembler is built. A special thanks to all those who took time to help me when we was stucked.
 \end{abstract}
 }
 
@@ -102,7 +104,7 @@
 
 \section{Introduction}
 
-\lettrine[nindent=0em,lines=3]{T} he goal of this computing project is to build an assembler for MIPS processors using C language. This assembler will be able to translate a human understandood language (Here assembler) to a machine understood language (binaries). This binaries are designed for MIPS 32 bits processors. As an input, the program take an object file that is actually a text file. Depending on options, it will produce :
+\lettrine[nindent=0em,lines=3]{T} he goal of this computing project is to build an assembler for MIPS processors using C language. This assembler will be able to translate a human understandable language (Here assembler) to a machine understood language (binaries). This binaries are designed for MIPS 32 bits processors. As an input, the program takes an object file that is actually a text file. Depending on options, it will produce :
 
 \begin{itemize}
 
@@ -112,7 +114,8 @@
 
 \end{itemize}
 
-We will \textbf{not} implement all the instruction set. Indeed, the purpose is to highlight the assembler function, not to build a brand new one (gcc do it very well). To be aware about what this project manage, please refer to sprint 2 section. In fact, this project have been built in 4 deliverables (or sprints). For each one, there is a description of sprint goals and functions that have been implemented.
+We will \textbf{not} implement all the instruction set. Indeed, the purpose is to highlight the functioning of an assembler, not to build a brand new one (gcc do it well). This project have been built in 4 deliverables (or sprints). For each one, there is a description of sprint goals, functions that must be implemented and those who are effectively implemented.
+
 
 
 
@@ -120,7 +123,7 @@ We will \textbf{not} implement all the instruction set. Indeed, the purpose is t
 
 \section{Run and test}
 
-Before we start, use makefile to compile the program (\textbf{ debug } if you want to print logs and \textbf{ release } if not). In addition, you can use some options to explicit to the program what you want as a result. It is not mandatory to use them, by default, you will get an object ELF file.
+To run the assembler, use makefile to compile the program (\textbf{ debug } if you want to print logs and \textbf{ release } if not). You can use some options to explicit to the program what you want as a result. It is not mandatory to use them, by default, you will get an object ELF file.
 
 \begin{lstlisting}
 ./as-mips [Options ..] pathToFile
@@ -137,7 +140,7 @@ Option & Function \\
 -l & To produce an assembly list \\
 -b & To produce only a binary object \\
 -r & For ELF release \\
--t & To launch tests \\
+-t & To run a test \\
 \hline
 \end{tabular}
 \end{table}
@@ -150,17 +153,29 @@ Option & Function \\
 \section{The project}
 
 \subsection{What is MIPS ?}
-MIPS is a reduced instruction set computer (RISC) instruction set architecture. Designed by MIPS Technologies, it have been introduced in 1985. The philosophy of a RISC architecture is to offer a reduced -means in a single memory cycle- instruction set. It doesn't mean that there is less instruction. In fact, RISC instruction are sometimes bigger than CISC ones. RISC architectures have fixed-length instructions and simplified incoding that enable an imporved code density. Also, it is based on load/store architecture that means that the result of calculations is made by specific instructions. ALU instructions mainly use general purpose registers that simplify compiler design. RISC processors solve generally an instruction in 1 cycle.
+MIPS is a reduced instruction set computer (RISC) instruction set architecture. Designed by MIPS Technologies, it have been introduced in 1985. The philosophy of a RISC architecture is to offer a reduced -means in a single memory cycle- instruction set. It doesn't mean that there is less instruction. In fact, RISC instruction are sometimes bigger than CISC ones. RISC architectures have fixed-length instructions and simplified incoding that enable an improved code density. Also, it is based on load/store architecture that means that the result of calculations is made by specific instructions. ALU instructions mainly use general purpose registers that simplify compiler design. RISC processors solve generally an instruction in one cycle.
 
-Like in major RISC processors, MIPS are featured in a Harvard memory model that seperate physically the instructionmemory from data memory. Changing data does not impact the code.
+Like major RISC processors, MIPS are featured in a Harvard memory model that seperate physically the instruction memory from data memory that we distiguish by using directives .text and .data. Thus, changing data does not impact the code.
 
-In this project, we aim to focus on a specific MIPS processor, the first one. We will not be interessed to Application-specific extensions such as MIPS MCU or MIPS DSP (For signal processing). The aim is to build a simple assembler that can be run in MIPS I for instance. All extension that can be seen in other MIPS extension such as floating point instruction will not be handled.
+In this project, we aim to focus on a specific MIPS processor, the first made one. We will not be interessed in application-specific extensions such as MIPS MCU or MIPS DSP (For signal processing). The aim is to build a simple binary ELF object that can be run using MIPS I for instance. All extension that can be seen in other MIPS extension such as floating point instruction will not be handled.
 
 The MIPS architecture is based on pipeline architecture. As a picture often speaks better than a thousand words, here a simplified drawing of the first commercialized MIPS processors R2000 :
 
-% ADD pipeline picture 
+\begin{figure}[h!]
+\begin{center}
+\includegraphics[width=5cm]{images/MIPS-R2000.jpg} 
+\end{center}
+\caption{Layout of MIPS R2000}
+\label{Layout MIPS R2000}
+\end{figure}
 
-% ADD layout picture 
+\begin{figure}[h!]
+\begin{center}
+\includegraphics[width=6cm]{images/MIPS-R2000-pipeline-architecture.png} 
+\end{center}
+\caption{Pipeline of MIPS R2000}
+\label{MIPS R2000}
+\end{figure}
 
 This pipeline is organised in several stages :
 
@@ -168,22 +183,22 @@ This pipeline is organised in several stages :
  \item[ Instruction Fetch ] This stage retrieve the next instruction to decode using the program counter.
  \item[ Instruction Decode ] The retrieved instruction is decoded following the type of the instruction.
  \item[ Execute ] The instruction is executed. The execution depends on the decoded input. MUXs are used to manage the execution and control the ALU input.
- \item[ Memory access ] Give access to memory in order to load or store an information in registers.
- \item[ Write back ] Upload the value of some register depending of the excution result.
+ \item[ Memory access ] Give access to memory in order to load or store data in registers.
+ \item[ Write back ] Upload the value of some register depending of the execution results.
 \end{description}
 
-This pipeline is the same in many RISC processors. If you are intersseted on how a processor is designed, here a VHDL description of an ARM processor with the same number of stages (Of course, the instruciton set is completly different !) : https://github.com/bargacha/ARM-Processor
+This pipeline is the same in many RISC processors. If you are interested on how a processor is designed, here a VHDL description of an ARM processor with the same number of stages (Of course, the instruction set is completely different !) : https://github.com/bargacha/ARM-Processor
 
-Ideally, each instruction is made in a cycle and follows each stage. However, when instructions depends on older ones or when branch instructions are launched, we may have some delay.
+Ideally, each instruction is made in a cycle without hazards. However, when instructions depends on older ones or when branch instructions are triggered, it may have some delay.
 
-The MIPS processor have a 4Go memory adressable by bytes. That means that when increment the Program Counter (PC), we jump 8 bits. In addition, all MIPS processors are \textit{big endian} : The high byte first, followed by the lower bytes.
+The MIPS processor have a 4Go memory adressable by bytes. It means that incrementing Program Counter (PC) is the same as jumping 8 bits. In addition, all MIPS processors are \textit{big endian} : The high byte first, followed by the lower bytes.
 
 \subsection{All features}
 
-All features are recorded in this section. In order to manage correctly the project, I started by pinpoint the subject and describe what will be implemented in our basic assembly project. The main goal is to :
+All features are recorded in this section. In order to manage correctly the project, I started by pinpoint the subject and describe what will be implemented in our basic assembler project. The main goal is to :
 
 \begin{quotation}
- \textbf{Implement a basic MIPS assembler. As a input, it will get a standarized MIPS assembler file and should produce as an output a ELF binary file that can be executed using QEMU, an emulator for many basics processors.}
+ \textbf{Implement a basic MIPS assembler. As a input, it will get a standarized MIPS assembler file and should produce as an output an ELF binary file that can be executed using QEMU, an emulator for many basics processors.}
 \end{quotation}
 
 Features are :
@@ -191,22 +206,22 @@ Features are :
 \begin{itemize}
  \item An assembler for MIPS 32 bits microprocessor.
  \item Manage 32 General Purpose Registers with support of conventional notations (\$sp means register \$29).
- \item Main instructions are supported. The standard proposed by MIPS Technologies will be followed. Please refer to InstSet.txt to see wich ones. \textbf{ In some conditions, you can add instructions directly in this file ! } Also, pseudo-instructions are implemented.
+ \item Main instructions are supported. The standard provided by MIPS Technologies will be followed. Please refer to InstSet.txt to see wich ones are managed. \textbf{ By following the syntax, you can add instructions directly in this file ! } Also, pseudo-instructions are implemented in the same file.
  \item Comments are managed.
  \item Main directives are managed : .text, .data, .bss, .set (only noreorder), .word ...
  \item All adressing modes will be implemented.
  \item Can take options that define wich input will be produced. (See section 'Run and Test')
- \item Can produce an assembly list that explicit each line of the source.
+ \item Can produce an assembly list that explicit each line of the source code.
  \item Can produce a binary object.
- \item Can produce an ELF binary object used in many OS.
- \item Using -t option can print some testing logs. No output file are produced.
+ \item Can produce an ELF binary object understood by in many OS.
+ \item Using -t option can print some testing logs. No output file are produced in this case.
 \end{itemize}
 
-In addition, at the time of writing, I plan to offer some basic optimisation examples to reduce hazard in pipeline processors. To do so, please add the option -o.
+In addition, at the time of writing, I plan to offer some basic optimisation examples to reduce hazards in pipeline processors. To do so, please add the option -o.
 
 \subsection{Program structure and delivrables}
 
-This document is organised according to our professors intructions. Indeed, this project have been made in my college context. It means that code is built our deliverables to provide each week. Here a description of each deliverable.
+This document is organised according to our professors intructions. Indeed, this project have been made in my college context. It means that code is built around deliverables to provide each 3 weeks. Here a description of each deliverable :
 
 \begin{description}
  \item[ Deliverable 1 ] Lexical analysis. Understand the signification of each word and build a chain of lexemes.
@@ -221,23 +236,26 @@ The program structure is :
  \item [ lex.c ] Lexical analysis.
  \item [ syn.c ] Syntaxic analysis.
  \item [ eval.c ] Used in syntaxic analysis to evaluate relocation informations.
+ \item [ print.c ] To generate outputs.
  \item [ functions.c ] Some useful functions.
 \end{description}
 
-For more information, please refer to the head of each source where a complete description is provided.
+For more information, please refer to the head of each source where a complete description is provided. You can also use Doxygen.
 
 
 
 \subsection{Project management tools}
 In order to keep the project organised and be able to work with other collaborators, all sources will be shared in my github. To get initial sources, here the college link : http://tdinfo.phelma.grenoble-inp.fr/
 
-In addition, a project management tool will be used : Odoo. It is an open source tool based on kanban model. There is many tools for collaborative work. In order to reduce costs, I took a free AWS server and I implemented a basic configuration provided by http://www.pragtech.co.in/ base on ubuntu.
+In addition, a project management tool will be used : Odoo. It is an open source tool based on kanban models. There is many tools for collaborative work. In order to reduce costs, I took a free AWS server and I implemented a basic configuration provided by http://www.pragtech.co.in/ based on ubuntu.
 
 Finally, this report is written using LateX. The sources are also available in my github.
 
 The program will be tested for ubuntu 16.04 and centos 6 standard configuration.
 
 % %------------------------------------------------
+% 
+% Section example :
 % 
 % \section{Delivrable 1}
 % 
@@ -250,24 +268,24 @@ The program will be tested for ubuntu 16.04 and centos 6 standard configuration.
 \section{Delivrable 1}
 
 \subsection{Goals and features}
-In this first deliverable, the aim is to produce a complete lexical analysis. The central function is :
+In this first deliverable, we aim to produce a complete lexical analysis. The main function is :
 
 \begin{lstlisting}[language=C]
 void lex_standardise( char* in, 
 char* out )
 \end{lstlisting}
 
-It is responsible of the correct shape input and some upstream processing. It cleans redondant spaces and help to detect comments for instance by puting a space before. Indeed, the following function uses a simple strtok function to split a line into different word. It is mandatory to have a fully functionable function !
+It is responsible of the input shape and other upstream processing. It cleans redondant spaces and help to detect comments by puting a space before \#. The following function uses a simple strtok function to split a line into different word. It is mandatory to have a fully functionable function !
 
-This function do some adjustment :
+This function do some adjustments :
 
 \begin{itemize}
- \item Add space before and after for ',', ')', '(' and '\#'
- \item No space before and only one after for ':'
- \item No space after and only one before for '-'
+ \item Add a space before and after chars ',', ')', '(' and '\#'
+ \item No space before and only one after ':'
+ \item No space after and only one before '-'
 \end{itemize}
 
-The next step concern the construction the chain of lexemes. A chain is a coding method in C to structure data. In our case, it will have this structure :
+The next step concerns the construction of lexemes chain. A chain is a coding method in C to structure data. In our case, it will have this structure :
 
 \begin{lstlisting}[language=C]
 typedef struct chain_t {
@@ -282,43 +300,82 @@ typedef struct chain_t {
 } *chain;
 \end{lstlisting}
 
-In order to symplify the code, We use the same structure for all types of chains. This able us to user chain elements of different natures and combine chain between them. For this purpose, we use there 'union' directive. So we can manage different types of variables and reducing by the same way the structure lenght in bytes.
+In order to symplify the code, We use the same structure for all types of chains : symbol tables, code chain ... This able us to use chain elements of different types and combine them. For this purpose, we use the directive 'union' so we can manage different types of variables and reducing by the way the structure length.
 
-For lexemes chain, here a simple drawing of how everything is working :
+For lexemes chain, here a simple drawing of how everything is working. First, the basic element of a chain :
 
-% TODO Ajouter l'image pour la collection de lexemes
+\begin{figure}[h!]
+\begin{center}
+\includegraphics{images/basic_element.png} 
+\end{center}
+\caption{Basic element of the chain}
+\label{Element}
+\end{figure}
 
-To recognize lexemes, we use a FSM. Here another drawing that explicit the general function. For more information, the code have been commented to specify each step.
+Secondly, the lexemes chain structure. Red arrow means that it points using ``struct chain\_t *bottom;''. To express the end of a chain, we use NULL operator. Black arrow contains a lexeme in this case using ``lex bottom\_lex;''.
 
-% TODO Ajouter l'image de la FSM
+\begin{figure}[h!]
+\begin{center}
+\includegraphics{images/lex_chain.png} 
+\end{center}
+\caption{Lexemes chain}
+\label{Lex chain}
+\end{figure}
+
+To recognize lexemes, we use a FSM (finite state machine). Here another drawing that explicit the general function. For more information, the code have been commented to specify each step.
+
+\begin{figure}[h!]
+\begin{center}
+\includegraphics[width=7cm]{images/FSM.png} 
+\end{center}
+\caption{FSM - Credits to Francois Portet}
+\label{Lex chain}
+\end{figure}
 
 In the end of this deliverable, we must have a clean collection of lexemes. It means that sometimes, we may have some errors. For example, the lexeme '0R6155' is not legal. Indeed, this syntax means that we expect an octal number and the char 'R' is not expected. However, the program understand some basic deviations such as '099' that can be translated to a Decimal number.
 
-Thus, when a lexeme is not legal, a error is raise specified bad the sentence : 'Lexical error'.
+Thus, when a lexeme is not legal, a error is raised by a specific sentence : 'Lexical error'.
 
 
 \subsection{Examples and test}
 
-To try lex\_standardise, run test 1 with the file miam.s :
+To try lex\_standardise, run test 1 using file miam.s for instance :
 
 \begin{lstlisting}
 ./as-mips -t 1 tests/miam.s
 \end{lstlisting}
 
-It will print you the input and the standirized output. Normally, this function manage all basic cases. Of course, there is no further verifications in lexical analysis. It means that this function do not raise error. It just bring an easy readable string that can be used faster after.
+It will print you the input and the standardised output. Normally, this function manage all basic cases. Of course, there is no further verifications in lexical analysis. It means that this function do not raise errors. It just bring an easy readable string that can be used after for further analysis.
 
-To display lexeme chain, run test 2. It will print the recognized lexeme and type.
+To display lexeme chain, \textbf{run test 2}. It will print the recognized lexemes and their types.
+
+To conclude :
+\begin{itemize}
+ \item A chain of lexemes is generated, it contains all relevant lexemes.
+ \item We manage bad written source code by standardising it before further analysis.
+ \item Comments and punctuations are ignored.
+ \item FSM manages decimal, octal, hexa, labels, registers, directives and symbols.
+ \item You can find all lexeme and chain functions in the file functions.c
+ \item \textbf{This step is fully functional.}
+\end{itemize}
+
 
 %------------------------------------------------
 
 \section{Delivrable 2}
 
 \subsection{Goals and features}
-In this deliverable, we start by generating the instruction set. The instruction set is the list of all instructions that are managed by our program. In MIPS context, there 3 kinds of instructions :
+In this deliverable, we start by generating the instruction set. The instruction set is the list of all instructions that are taken into account by our program. In MIPS context, there 3 kinds of instructions :
 
-% Ajouter une illustrations des différents types
+\begin{figure}[h!]
+\begin{center}
+\includegraphics[width=7cm]{images/instType.png} 
+\end{center}
+\caption{Instruction types from researchgate.net}
+\label{instType}
+\end{figure}
 
-Also, we note that for instruction of I-type, there is 2 ways to code it in MIPS assembly code (depending on the instruction), for example : 
+Also, we note that for I-type instructions, there is 2 ways to code it in MIPS assembly code (depending on the instruction), for example : 
 
 \begin{itemize}
  \item For ADDI instruction : ADDI \$rt, \$rs, immediate
@@ -386,6 +443,11 @@ int hash( char * s, int modulo ) {
 }
 \end{lstlisting}
 
+To conclude :
+\begin{itemize}
+ \item All instruction types are managed : R, I and J.
+ \item A ``virtual'' type have been added, IB. It manages I instruction of this shape : LW \$6, 200(\$7).
+\end{itemize}
 
 
 %------------------------------------------------
@@ -393,6 +455,9 @@ int hash( char * s, int modulo ) {
 \section{Delivrable 3}
 
 \subsection{Goals and features}
+In this part, we aim to manage all the final functionalities. We must properly generate the symbol Table, so it had to be optimized and robust. Thus, if the symbol table is changed, the relocation table must be also changed.
+
+Relocation entries should be generated. Final verifications and decode will be made, especially for relocations. For instance, a BEQ instruction need a decoded offset. In a first sight, the instruction is decoded without adding any offset. So, if no related symbol is found after, that means that the instruction will keep an offset of zero.
 
 \subsection{Examples and test}
 
@@ -401,6 +466,15 @@ int hash( char * s, int modulo ) {
 \section{Delivrable 4}
 
 \subsection{Goals and features}
+In the end of this step, the program wil be able to generate a fully functional ELF object file.
+As it have been specified in former section, there is 3 types of different outputs :
+
+\begin{description}
+ \item[List mode] In this mode, we generate the assembly list. It explicit each line of source code with the equivalent decode binary code. You will also find symbols and relocations tables.
+ \item[Object mode] Before each section, we put the lengh of input code. For section .bss, only the lengh will be added.
+ \item[ELF mode] An understandable object file, used by many major OS, focusing on a minimal implementation.
+\end{description}
+
 
 \subsection{Examples and test}
 

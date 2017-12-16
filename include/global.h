@@ -65,16 +65,15 @@
 #define FAILURE          1
 
 /*!
-  \brief All enum definitions. Definition of states for our FSM.
+  \brief All enum definitions.
  */
 
-enum {INIT, DECIMAL_ZERO, DECIMAL, OCTO, HEXA, SYMBOL, COMMENT, REGISTER, DIRECTIVE, PUNCTUATION, LABEL, ERROR};
+enum {INIT, DECIMAL_ZERO, BIT, DECIMAL, OCTO, HEXA, SYMBOL, COMMENT, REGISTER, DIRECTIVE, PUNCTUATION, LABEL, ERROR};
 
 enum {UNSIGNED, SIGNED};
 
-enum {R, I, J, IB};
+enum {R, I, J, IB, I2};
 
-/* Sections */
 enum {UNDEFINED, TEXT, DATA, BSS};
 
 enum { LIST_MODE, OBJECT_MODE, ELF_MODE, TEST_MODE };
@@ -90,7 +89,7 @@ typedef struct digit_t {
 	unsigned int type;
 	int sign;
 	
-	/* For debug reasons, we keep all information */
+	/* For debug purposes only, we keep all data */
 	union {
 		int integer;
 		int octo;
@@ -130,7 +129,10 @@ typedef struct inst_t {
 	char special[STRLEN];
 } *inst;
 
-/* Symbol contained in symTab */
+/*!
+  \brief : Symbol struture. Symbol contained in symTab.
+ */
+ 
 typedef struct symbol_t {
 	unsigned int line;
 	
@@ -141,7 +143,9 @@ typedef struct symbol_t {
 	
 } *symbol;
 
-/* After decode, used to struture the chain list in order to build the binary code. */
+/*!
+  \brief : Code struture. After decode, used to struture the chain list in order to build the binary code.
+ */
 
 typedef struct code_t {
 	unsigned int line;
@@ -153,7 +157,9 @@ typedef struct code_t {
 	
 }* code;
 
-/* Relocation struture */
+/*!
+  \brief : Relocation struture.
+ */
 
 typedef struct rel_t {
 	/* Address of relocation */
@@ -174,15 +180,13 @@ typedef struct rel_t {
 }* rel;
 
 /*!
-  \brief INTERNALS: Type definition of chain. To understand the signification of next / bottom, please read the documentation graphs.
+  \brief : Type definition of chain. To understand the signification of next / bottom, please read the documentation graphs.
  */
  
 typedef struct chain_t {
 	
 	/* Start at 1. If 0, not defined */
 	unsigned int line;
-	
-	struct chain_t *next;
 	
 	union {
 		struct chain_t *bottom;
@@ -192,10 +196,13 @@ typedef struct chain_t {
 		code c;
 		rel r;
 	}this;
+	
+	struct chain_t *next;
+	
 } *chain;
 
 /*!
-  \brief INTERNALS: A global variable is declared in all files. This variable is used to manage tests. It is defined in top of main.
+  \brief : A global variable is declared in all files. This variable is used to manage tests. It is defined in top of main.
  */
 
 extern int testID;

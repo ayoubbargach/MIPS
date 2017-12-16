@@ -10,7 +10,7 @@
  #ifndef _PRINT_H_
 #define _PRINT_H_
 
-void print( chain ** c, int mode, int, char * );
+void print( chain * c, int mode, int, char * );
 
 char* section_to_string(int section);
 

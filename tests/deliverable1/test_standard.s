@@ -1,3 +1,4 @@
-boucle       :       JAP 200 
-ADDI   $2    ,  $3, 0?555
-		J   0xAB
+boucle       :     
+ROTR   $2    ,  $3, 0x555 # J   0xAB
+
+

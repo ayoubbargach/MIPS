@@ -13,7 +13,7 @@
  * 3/ If the intruction is legal, translate to binary. If not, raise an error.
  */
  
- #include <stdlib.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
@@ -21,156 +21,14 @@
 
 #include <global.h>
 #include <notify.h>
-#include <syn.h>
 #include <functions.h>
 
-
-/**
- * @return A tab of the desired instruction set.
- * @brief A table with all instruction set information is loaded. The structure of this information is described in "inst" type definition.
- *
- */
-
-void instructionSet( inst * tab ) {
-	
-	/* File init */
-	FILE *fp   = NULL;
-    char * file = NULL;
-	
-	/* We load the file which contain all the instruction set, you can rename it here if you want ! */
-	
-	file  	= "instSet.txt";
+#include <lex.h>
+#include <inst.h>
+#include <eval.h>
+#include <syn.h>
 
 
-    if ( NULL == file ) {
-        ERROR_MSG("Error, no intruction set file specified in source code !");
-
-    }
-    
-    fp = fopen( file, "r" );
-    
-    if ( NULL == fp ) {
-        ERROR_MSG("Error while trying to open %s file --- Aborts",file);
-    }
-    
-    /* File opened, the structure is like this : "SRL 000010 0 0111 rs=00001". For more information, please read the documentation. */
-    
-    /* General struture : OP BinaryDecode Type(R=0,I=1,J=2) Operand SpecialSet */
-    
-    /* Init */
-    int i=0, j=0;
-    char line[STRLEN];
-    char *seps = " ";
-    char *token = NULL;
-    
-    /* Used to save the tokenized strings */
-    char* result[5];
-    
-    /* In case there are no special arguments */
-    result[4]=NULL;
-    
-    while(!feof(fp)) {
-    	/*read line-by-line */
-        if ( NULL != fgets( line, STRLEN-1, fp ) ) {
-        	line[strlen(line)-1] = '\0';  /* eat final '\n' */
-            
-            if ( 0 != strlen(line) ) {
-            	for( token = strtok( line, seps ); NULL != token; token = strtok( NULL, seps )) {
-            		result[i] = token;
-            		i++;
-            	}
-            }
-            
-            /* Add instruction to the table */
-            
-            j = hash( result[0], 1000);
-            
-            if ( tab[j] != NULL ) {
-            	ERROR_MSG("There is a collision");
-            }
-            else {
-            	/* Make instruction and record it */
-            	tab[j]= makeInst( result[0], result[1], result[2], result[3], result[4]);
-            } 
-            
-            
-            i=0;
-        }
-		
-	
-	}
-	
-	/* The last one is NULL (to treat with loop) */
-	
-	tab[j] = NULL;
-	
-	/* ---- TEST 3 ---- */
-	
-	if (testID == 3) {
-    
-		i=0;
-		while ( i<1000 ) {
-			if (tab[i] != NULL) {
-				WARNING_MSG("%s -> Op %s at %d", tab[i]->name, tab[i]->opcode, i );
-			}
-		
-			i++;
-		}
-	}
-	
-	
-}
-
-/**
- * @param name Name of instruction, "ADD"
- * @param op Binary translation, "10000"
- * @param type From enum (see header) R => 0, ...
- * @param operand Define which operands are defined. For example, 0110 => Only rt and rd can be defined in assembly source code. 
- * @param special Define automatically some operands. For example, sa=00000 in case of ADD.
- * @return A completed structure Inst, ready to be added to the instruction set chain.
- * @brief Routine to make fastly a instruction using string parameters.
- *
- */
-
-
-inst makeInst( char* name, char* op, char* type, char* operand, char* special ) {
-	inst ins = malloc( sizeof( *ins ) );
-
-	/* strncpy copy the string arguments in the structure, you can't do that with a simple "=" ! */
-	strncpy ( ins->name, name, sizeof(ins->name) );
-	strncpy ( ins->opcode, op, sizeof(ins->opcode) );
-	ins->op = binaryToInt( op );
-	
-	ins->type = atoi( type );
-	strncpy ( ins->operand, operand, sizeof(ins->operand) );
-	
-	if (special != NULL) {
-		strncpy ( ins->special, special, sizeof(ins->special) );
-	}
-	
-	
-	return ins;
-}
-
-/**
- * @param s The binary string to analyse
- * @return an unsigned int as a result
- * @brief Convert a binary string to an unsigned integer
- *
- */
-
-
-unsigned int binaryToInt( char* start ) {
-	unsigned int total = 0;
-	
-	while (*start)
-	{
-		total <<= 1;
-   		if (*start++ == '1') total^=1;
-	}
-	
-	return total;
-}
 
 
 /**
@@ -179,234 +37,504 @@ unsigned int binaryToInt( char* start ) {
  *
  */
  
-/* /!\ int is a 4 bytes type. But if you run this code in an ARM 16 bits for instance (Thumb mode), int will be coded in 2 bytes only ! The assembly will failure /!\ */
+/* /!\ int is a 4 bytes type. But if you run this code in an ARM 16 bits for instance (Thumb mode), int will be coded in 2 bytes only ! The assembly will failure. (For further improvement, need to implement uint32_t structure included by ctype.h) /!\ */
 
-unsigned int decodeInstruction( chain ch, inst * instSet ) {
+void decodeInstruction( chain ** c, inst * instSet ) {
+	
+	chain ch = read_next( *c[0] );
+	chain symTab = *c[1];
+	chain * chCode = c[2];
+	chain * chRel = c[3];
 	
 	int i = 0;
+	int nextInst = 0;
+	int typeRel = NONE;
 	unsigned int code = 0;
 	
+	
+    
 	/* We start by verifying the size of int */
 	if ( sizeof( int ) == 4 ) {
 	
 		/* init */
 		
-		chain in = ch;
+		chain in;
 		lex l;
 		
-		if (in != NULL) {
+		if (ch == NULL) {
+			ERROR_MSG("Internal error : Lexeme chain is badly written. Please contact devs.");
+		}
 		
-			/* /1\ If the chain is well constructed, we can read lexeme */
-			l = read_lex( in );
+	
+		/* /1\ If the chain is well constructed, we can read lexeme */
+		l = read_lex( ch );
+		
+		if ( l != NULL ) {
 			
-			if ( l != NULL ) {
-				
-				/* The function work here */
-				
+			/* The function work here */
+			
+			i = hash( l->this.value, 1000);
+			
+			if ( instSet[i] == NULL || strcmp( instSet[i]->name, l->this.value)) {
+			
+				majuscule(l->this.value);
 				i = hash( l->this.value, 1000);
-				WARNING_MSG("Decode error : Symbol %s / %d", l->this.value, i);
 				
 				if ( instSet[i] == NULL || strcmp( instSet[i]->name, l->this.value)) {
-					majuscule(l->this.value);
-					i = hash( l->this.value, 1000);
-					if ( instSet[i] == NULL || strcmp( instSet[i]->name, l->this.value)) {
-						ERROR_MSG("Decode error : can not decode the symbol %s (In upper case neither)", l->this.value);
+					ERROR_MSG("Decode error : can not decode the symbol %s (In upper case neither)", l->this.value);
+				}
+			}
+		
+		}
+		else { /* If no lexeme, Lexeme chain is not well constructed */
+			ERROR_MSG("Decode error : Lexeme chain is badly built");
+		}
+		
+		/* /2\ We start by managing special specifications */
+		
+		/* If special == '#', we do nothing */
+		if ( strcmp(instSet[i]->special, "#") ) {
+		
+			/* init */
+			int j=0;
+			char *seps = ",=";
+			char *token = NULL;
+			chain chTemp = malloc( sizeof( *chTemp ) );
+			*chTemp = *ch;
+			
+			in = chTemp;
+			
+			
+			char* result[16] = {NULL};
+			
+			
+			for( token = strtok( instSet[i]->special, seps ); NULL != token; token = strtok( NULL, seps )) {
+        		result[j] = token;
+        		j++;
+        	}
+        	
+        	/* Special modifications depend on instruction type
+        	 * If there is any, all the operands need to by specified in order !
+        	 * Example : if you need to change rs and rt with the first and third operand of input chain, you must write something like;
+        	 * rs=A,rt=C
+        	 */
+        	
+        	j=0;
+        	
+        	/* first we verify if there is any second instrucion to do */
+        	if ( result[j][0] == '*' ) {
+        		nextInst = 1;
+        		j ++;
+        		
+        		/* We also change OP into the lexeme for the next recurvise call of decodeInstruction */
+        		strcat(l->this.value, "*");
+        		
+        		/* Case of a pseudo-instruction in two instructions => HILO reloc */
+        		typeRel = R_MIPS_HI16;
+        	}
+        	else if ( l->this.value[strlen(l->this.value) - 1] == '*' ) { /* It means that previous reloc was HI16 */
+        		typeRel = R_MIPS_LO16;
+        	}
+        	
+        	
+        	switch (instSet[i]->type) {
+        	
+        		case R :
+					
+					/* The special specifications must be constructed in the good order ! */
+					
+					if ( atoi(&instSet[i]->operand[2]) && !strcmp(result[j],"rd") ) {
+						chTemp = get_special( result[j+1], chTemp, ch);
+						j+=2;
+						
 					}
-				}
+					
+					if ( atoi(&instSet[i]->operand[0]) && !strcmp(result[j],"rs") ) {
+						chTemp = get_special( result[j+1], chTemp, ch);
+						j+=2;
+						
+					}
+					
+					if ( atoi(&instSet[i]->operand[1]) && !strcmp(result[j],"rt") ) {
+						chTemp = get_special( result[j+1], chTemp, ch);
+						j+=2;
+						
+					}
+					
+					if ( atoi(&instSet[i]->operand[3]) && !strcmp(result[j],"sa") ) {
+						chTemp = get_special( result[j+1], chTemp, ch);
+						j+=2;
+						
+					}
+					
+					
+					break;
+				
+				case I :
+				
+					if ( atoi(&instSet[i]->operand[1]) && !strcmp(result[j],"rt") ) {
+						chTemp = get_special( result[j+1], chTemp, ch);
+						j+=2;
+						
+					}
+					
+					if ( atoi(&instSet[i]->operand[0]) && !strcmp(result[j],"rs") ) {
+						chTemp = get_special( result[j+1], chTemp, ch);
+						j+=2;
+						
+					}
+					
+					if ( atoi(&instSet[i]->operand[2]) && !strcmp(result[j],"offset") ) {
+						chTemp = get_special( result[j+1], chTemp, ch);
+						j+=2;
+						
+					}
 			
+					j+=2; 
+
+					break;
+				
+				case IB :
+				
+					if ( atoi(&instSet[i]->operand[1]) && !strcmp(result[j],"rt") ) {
+						chTemp = get_special( result[j+1], chTemp, ch);
+						j+=2;
+						
+					}
+					
+					if ( atoi(&instSet[i]->operand[2]) && !strcmp(result[j],"offset") ) {
+						chTemp = get_special( result[j+1], chTemp, ch);
+						j+=2;
+						
+					}
+					
+					if ( atoi(&instSet[i]->operand[0]) && !strcmp(result[j],"rs") ) {
+						chTemp = get_special( result[j+1], chTemp, ch);
+						j+=2;
+						
+					}
+			
+					j+=2;
+					
+					break;
+				
+				case J :
+					if ( atoi(&instSet[i]->operand[0]) && !strcmp(result[j],"offset") ) {
+						chTemp = get_special( result[j+1], chTemp, ch);
+						j+=2;
+						
+					}
+					
+					break;
+				
+				default :
+					ERROR_MSG("Internal error : Error in instSet.txt");
+					break;
 			}
 			
 			
-			
-			/* /2\ The type of instruction permit to verify the arguments */
-			
-			/* FROM right to left. ALSO, DO NOT CHANGE ORDER of rd, rs ... By this mecanism we test each lexeme in teh good order ! */
-			
-			if (instSet[i]->type == R) {
-				
-				/* /!\ STRUCTURE /!\ */
-				
-				/* |SPECIAL|rs|rt|rd|sa|Opcode| */
-			
-				/* /!\ First, we add the opcode /!\ */
-				
-				/* Opcode 6 bits */
-				code = instSet[i]->op;
-				
-				/* /!\ Verification of operands is done there /!\ */
-				
-				
-				/* rd */
-				if ( atoi(&instSet[i]->operand[2]) ){
-				
-					in = read_line( in );
-					l = read_lex( in ); 
-					
-					code = code + (registerToInt(l->this.value) << 11);
-					
-				}
-				
-				/* rs */
-				if ( atoi(&instSet[i]->operand[0]) ){
-				
-					in = read_line( in );
-					l = read_lex( in ); 
-					
-					code = code + (registerToInt(l->this.value) << 21);
-				}
-				
-				/* rt */
-				if ( atoi(&instSet[i]->operand[1]) ){
-				
-					in = read_line( in );
-					l = read_lex( in ); 
-					
-					code = code + (registerToInt(l->this.value) << 16);
-				}
-				
-				/* sa */
-				if ( atoi(&instSet[i]->operand[3]) ){
-				
-					in = read_line( in );
-					l = read_lex( in ); 
-					
-					code = code + (registerToInt(l->this.value) << 6);
-				}
-				
-				
-				/* /!\ END /!\ */
-				
-			}
-			else if ( instSet[i]->type == I ) {
-				
-				/* /!\ STRUCTURE /!\ */
-				
-				/* |Opcode|rs|rt|offset| */
-				
-				/* /!\ Finally, we add the opcode /!\ */
-				
-				/* Opcode 6 bits */
-				
-				code = instSet[i]->op << 26;
-				
-				/* rt */
-				if ( atoi(&instSet[i]->operand[1]) ){
-				
-					in = read_line( in );
-					l = read_lex( in ); 
-					
-					code = code + (registerToInt(l->this.value) << 16);
-				}
-				
-				
-				/* rs */
-				if ( atoi(&instSet[i]->operand[0]) ){
-				
-					in = read_line( in );
-					l = read_lex( in ); 
-					
-					code = code + (registerToInt(l->this.value) << 21);
-				}
-				
-				/* offset */
-				if ( atoi(&instSet[i]->operand[2]) ){
-				
-					in = read_line( in );
-					l = read_lex( in );
-					
-					code = code + registerToInt(l->this.value);
-					
-				}
-				
-				
-				/* /!\ END /!\ */
-				
-			}
-			else if ( instSet[i]->type == IB ) {
-				
-				/* /!\ STRUCTURE /!\ */
-				
-				/* |Opcode|rs|rt|offset| */
-				
-				/* /!\ First, we add the opcode /!\ */
-				
-				/* Opcode 6 bits */
-				
-				code = instSet[i]->op << 26;
-			
-				
-				/* rt */
-				if ( atoi(&instSet[i]->operand[1]) ){
-				
-					in = read_line( in );
-					l = read_lex( in ); 
-					
-					code = code + (registerToInt(l->this.value) << 16);
-				}
-				
-				/* offset */
-				if ( atoi(&instSet[i]->operand[2]) ){
-				
-					in = read_line( in );
-					l = read_lex( in );
-					
-					code = code + registerToInt(l->this.value);
-					
-				}
-				
-				
-				/* rs */
-				if ( atoi(&instSet[i]->operand[0]) ){
-				
-					in = read_line( in );
-					l = read_lex( in ); 
-					
-					code = code + (registerToInt(l->this.value) << 21);
-				}
-				
-				
-				/* /!\ END /!\ */
-				
-			}
-			else if ( instSet[i]->type == J ) {
-				
-				/* /!\ STRUCTURE /!\ */
-				
-				/* |Opcode|offset| */
-				
-				/* /!\ First, we add the opcode /!\ */
-				
-				/* Opcode 6 bits */
-				
-				code = instSet[i]->op << 26;
-				
-				/* Offset */
-				if ( atoi(&instSet[i]->operand[0]) ){
-					
-					in = read_line( in );
-					l = read_lex( in ); 
-					
-					code = code + registerToInt(l->this.value);
-				}
-				
-				/* /!\ END /!\ */
-				
-			}
-			
-			
+			/* TODO free the other chain if nextInst = 0 */
+		
 			
 		}
+		else {
+			in = ch;
+		}
+		
+		
+		
+		
+		
+		
+		/* /3\ The type of instruction permit to verify the arguments */
+		
+		/* FROM right to left. ALSO, DO NOT CHANGE ORDER of rd, rs ... By this mecanism we test each lexeme in the good order ! */
+		
+		if (instSet[i]->type == R) {
+			
+			/* /!\ STRUCTURE /!\ */
+			
+			/* |SPECIAL|rs|rt|rd|sa|Opcode| */
+		
+			/* /!\ First, we add the opcode /!\ */
+			
+			/* Opcode 6 bits */
+			code = instSet[i]->op;
+			
+			/* /!\ Verification of operands is done there /!\ */
+			
+			
+			/* rd */
+			if ( instSet[i]->operand[2] % '0' ){
+				
+				l = get_lex( &in ); 
+				
+				code = code + (l->this.digit->value << 11);
+				
+			}
+			
+			/* rs */
+			if ( instSet[i]->operand[0] % '0' ){
+			
+				l = get_lex( &in ); 
+				
+				code = code + (l->this.digit->value << 21);
+			}
+			
+			/* rt */
+			if ( instSet[i]->operand[1] % '0' ){
+			
+				l = get_lex( &in ); 
+				
+				code = code + (l->this.digit->value << 16);
+			}
+			
+			/* sa */
+			if ( instSet[i]->operand[3] % '0' ){
+			
+				l = get_lex( &in ); 
+				
+				code = code + (l->this.digit->value << 6);
+			}
+			
+			
+			/* /!\ END /!\ */
+			
+		}
+		else if ( instSet[i]->type == I ) {
+			
+			/* /!\ STRUCTURE /!\ */
+			
+			/* |Opcode|rs|rt|offset| */
+			
+			/* /!\ Finally, we add the opcode /!\ */
+			
+			/* Opcode 6 bits */
+			
+			code = instSet[i]->op << 26;
+			
+			/* rt */
+			if ( instSet[i]->operand[1] % '0' ){
+			
+				l = get_lex( &in );
+				
+				
+				code = code + (l->this.digit->value << 16);
+			}
+			
+			/* rs */
+			if ( instSet[i]->operand[0] % '0'  ){
+			
+				l = get_lex( &in );
+				
+				code = code + (l->this.digit->value << 21);
+			}
+			
+			
+			/* offset */
+			if ( instSet[i]->operand[2] % '0'  ){
+			
+				l = get_lex( &in );
+				
+				code = code + ((eval(l, typeRel, chRel, symTab) << 16) >> 16);
+				
+			}
+			
+			
+			/* /!\ END /!\ */
+			
+		}
+		else if ( instSet[i]->type == I2 ) { /* rs and rt order different */
+			
+			/* /!\ STRUCTURE /!\ */
+			
+			/* |Opcode|rs|rt|offset| */
+			
+			/* /!\ Finally, we add the opcode /!\ */
+			
+			/* Opcode 6 bits */
+			
+			code = instSet[i]->op << 26;
+			
+			
+			
+			/* rs */
+			if ( instSet[i]->operand[0] % '0'  ){
+			
+				l = get_lex( &in );
+				
+				code = code + (l->this.digit->value << 21);
+			}
+			
+			/* rt */
+			if ( instSet[i]->operand[1] % '0' ){
+			
+				l = get_lex( &in );
+				
+				
+				code = code + (l->this.digit->value << 16);
+			}
+			
+			/* offset */
+			if ( instSet[i]->operand[2] % '0'  ){
+			
+				l = get_lex( &in );
+				
+				code = code + ((eval(l, typeRel, chRel, symTab) << 16) >> 16);
+				
+			}
+			
+			
+			/* /!\ END /!\ */
+			
+		}
+		
+		else if ( instSet[i]->type == IB ) {
+			
+			/* /!\ STRUCTURE /!\ */
+			
+			/* |Opcode|rs|rt|offset| */
+			
+			/* /!\ First, we add the opcode /!\ */
+			
+			/* Opcode 6 bits */
+			
+			code = instSet[i]->op << 26;
+		
+			
+			/* rt */
+			if ( instSet[i]->operand[1] % '0' ){
+			
+				l = get_lex( &in );
+				
+				code = code + (l->this.digit->value << 16);
+			}
+			
+			/* offset */
+			if ( instSet[i]->operand[2] % '0' ){
+			
+				l = get_lex( &in );
+				
+				code = code + ((eval(l, typeRel, chRel, symTab) << 16) >> 16); /* Keep in mind that me need to change FFFFFE00 to 0000FE00 before adding */
+				
+			}
+			
+			
+			/* rs */
+			if ( instSet[i]->operand[0] % '0' ){
+			
+				l = get_lex( &in );
+				
+				code = code + (l->this.digit->value << 21);
+			}
+			
+			
+			/* /!\ END /!\ */
+			
+		}
+		else if ( instSet[i]->type == J ) {
+			
+			/* /!\ STRUCTURE /!\ */
+			
+			/* |Opcode|offset| */
+			
+			/* /!\ First, we add the opcode /!\ */
+			
+			/* Opcode 6 bits */
+			
+			code = instSet[i]->op << 26;
+			
+			/* Offset */
+			if ( instSet[i]->operand[0] % '0' ){
+				
+				l = get_lex( &in ); 
+				
+				code = code + ((eval(l, R_MIPS_26, chRel, symTab) << 26) >> 26);
+			}
+			
+			/* /!\ END /!\ */
+			
+		}	
+			
+			
+		
 	}
 	else {
 		ERROR_MSG("Critical error : size of int is not 4 bytes (Please verify if your system is running in 32/64 bits).");
 	}
 	
 	
-	/* Conversion string -> int, and we return int */
-	WARNING_MSG("Decoded code : %X", code);
+	/* In the end, we add the result code in the code chain without forgetting to increment addr ! */
+	addCode( *chCode,  code);
+	addr = addr + 4;
 	
-	return code;
+	if ( nextInst == 1 ) {
+		
+		/* /!\ Recursive ! /!\ */
+		decodeInstruction( c, instSet);
+		
+	}
+	
+	return;
 }
+
+/**
+ * @param value Special value to implement
+ * @return a new element to chain
+ * @brief Routine used to create a new temporary chain of lexeme that will we free within the same loop in decode_instruction(). By building this new chain, we aim to execute it by taking into account special indications.
+ */
+ 
+chain get_special( char *value, chain parent, chain source ) {
+    
+	chain c = add_chain_next( parent );
+	lex l = malloc( sizeof( *l ) );
+	
+	/* Error Management */
+	if (l == NULL) {
+		ERROR_MSG("Memory error : Malloc failed");
+    }
+    
+	int loop=0, i=0;
+	
+	
+	if ( value[0] >= 'A' && value[0] < 'Z' ) {
+		
+		/* Case when rs=A .. */
+		loop = (value[0] % 'A') +1;
+		for (i=0; i < loop; i++) {
+			
+			source = read_next(source);
+		}
+		
+		
+		l = read_lex( source );
+		
+		/* Test function
+		if (value[0] == 'B') {
+			WARNING_MSG("value B : %s %d", l->this.value, l->type);
+		} */
+		
+			
+		add_lex( c, l );
+		
+	}
+	else {
+		
+		/* Case when rs=00001 or offset=(in bits)  */
+		
+		if (strlen(value) < 6)
+			l = make_lex( REGISTER, value, UNSIGNED );
+		else
+			l = make_lex( BIT, value, UNSIGNED );
+		
+		add_lex( c, l );
+		
+	}
+	
+	return c;
+}
+
+
 
 /**
  * @param ch The chain to analyse.
@@ -420,129 +548,116 @@ unsigned int decodeInstruction( chain ch, inst * instSet ) {
  * - .space n : put n bytes initalized to 0.
  */
  
-void decodeDirective( chain ch, char * tab ) {
-	chain directive = ch;
-	int i = 0 ;
+void decodeDirective( chain ** c ) {
+
+	chain directive = read_next( *c[0] );
+	chain symTab = * c[1];
+	chain * chCode = c[2];
+	chain * chRel = c[3];
+
+	/* Note that we increase addr. Indeed, we manage here all other directives that record bytes : .word, .byte ...
+	 * The code may be larger than a word. The directive is saved byte by byte in some cases, i.e. a char (because it is the smallest data memory managed) 
+	 */
+	
+	unsigned int code = 0;
+	unsigned int byte = 0;
+	int i;
 	
 	lex l = read_lex( directive );
 	
-	if ( strcmp( l->this.value + 1, "word" ) ) {
-		directive = read_line( directive );
+	if ( !strcmp( l->this.value + 1, "word" ) ) {
+	
+	
+		directive = read_next( directive );
 		
 		while (directive != NULL) { /* If the chain is well built, it is not mandatory to verify if lex is NULL */
 			l = read_lex( directive );
-			directive = read_line( directive );
+			
+			if (l != NULL) {
+			
+				code = eval(l, R_MIPS_32, chRel, symTab); /* We use there all the unsigned int ! */
+			
+				addCode( *chCode, code );
+				addr = addr + 4;
+			}
+			
+			directive = read_next( directive );
 		}
-	}
-	else if ( strcmp( l->this.value + 1, "byte" ) ) {
-		directive = read_line( directive );
 		
-		while (directive != NULL) { /* If the chain is well built, it is not mandatory to verify if lex is NULL */
+		
+		
+	}
+	else if ( !strcmp( l->this.value + 1, "byte" ) ) {
+	
+	
+		directive = read_next( directive );
+		
+		while (directive != NULL) {
 			l = read_lex( directive );
-			directive = read_line( directive );
+			
+			if (l != NULL) {
+			
+				code = ((eval(l, NONE, chRel, symTab) << 24) >> 24 ); /* We need only the first 8 bits */
+			
+				addCode( *chCode, code );
+				addr = addr + 1;
+			}
+			
+			directive = read_next( directive );
 		}
-	}
-	else if ( strcmp( l->this.value + 1, "asciiz" ) ) {
-		directive = read_line( directive );
 		
-		while (directive != NULL) { /* If the chain is well built, it is not mandatory to verify if lex is NULL */
+		
+	}
+	else if ( !strcmp( l->this.value + 1, "asciiz" ) ) {
+	
+	
+		directive = read_next( directive );
+		
+		while (directive != NULL) { 
 			l = read_lex( directive );
 			
 			/* Here we add each string and we finish it by a char '\0', after that we translate using variable i */
-			strcpy( tab + i , l->this.value);
-			i = i + strlen( tab + i );
+
+			while ( byte < strlen(l->this.value) ) {
+				
+				code = l->this.value[byte];
+
+				addCode( *chCode, code );
+				byte++;
+				addr = addr + 1; /* Address is incremented byte by byte */
+			}
 			
-			directive = read_line( directive );
+			directive = read_next( directive );
 		}
+		
+		
 	}
-	else if ( strcmp( l->this.value + 1, "space" ) ) {
-		directive = read_line( directive );
+	else if ( !strcmp( l->this.value + 1, "space" ) ) {
+	
+	
+		directive = read_next( directive );
 		
 		if (directive != NULL) { /* If the chain is well built, it is not mandatory to verify if lex is NULL */
 			l = read_lex( directive );
+			code = 0;
 			
 			int n = l->this.digit->this.integer; /* Number of uninitialized bytes */
 			for (i=0; i<n; i++) {
-				tab[i] = 0;
+				addCode( *chCode, 0 );
+				addr = addr + 1;
 			}
 		}
+		
+		
 	}
 	else {
-		/* TODO raise an error */
+		ERROR_MSG("Decode error : directive %s unknown", l->this.value);
 	}
 	
- 	
- 	/* In the end we add the char '\0' */
  	return;
  
  }
 
-
-/**
- * @return unsigned int to be construct to build the decode code.
- * @brief this routine convert a char of a specified register to his int equivalent.
- *
- */
-
-unsigned int registerToInt( char *input ) {
-	
-	/* TODO make it more robust */
-	
-	unsigned int t = 0;
-	if ( strcmp( input+1, "zero" ) ) {
-		t = 0;
-	}
-	else if ( strcmp( input+1, "at" ) ) {
-		t = 1;
-	}
-	else if ( strcmp( input+1, "gp" ) ) {
-		t = 28;
-	}
-	else if ( strcmp( input+1, "sp" ) ) {
-		t = 29;
-	}
-	else if ( strcmp( input+1, "fp" ) ) {
-		t = 30;
-	}
-	else if ( strcmp( input+1, "ra" ) ) {
-		t = 31;
-	}
-	
-	switch (input[1]) {
-		case 'v':
-			t = atoi(input+2) + 2;
-		break;
-		
-		case 'a':
-			t = atoi(input+2) + 4;
-		break;
-		
-		case 't':
-			if (atoi(input+2) < 8) t = atoi(input+2) + 8;
-			else t = atoi(input+2) + 16;
-				
-		break;
-		
-		case 's':
-			t = atoi(input+2) + 16;
-		break;
-		
-		case 'k':
-			t = atoi(input+2) + 16;
-		break;
-		
-		default:
-			t = atoi( input+1);
-		break;
-	}
-	
-	if (t > 31) {
-		ERROR_MSG("Decode error : one register is badly written");
-	}
-	
-	return t;
-	
-}
 
 
 
@@ -557,52 +672,47 @@ unsigned int registerToInt( char *input ) {
  * @brief This routine is used to fetch and decode if needed the input intruction. 
  */
  
- void fetch( chain ch, chain symTab, chain chCode, int * section, unsigned int * addr, inst * instSet, unsigned int *nline ) {
- 	chain element = ch;
+ void fetch( chain ** c, inst * instSet ) {
+ 	chain element = *c[0];
+ 	chain * symTab = c[1];
+ 	
  	lex l;
- 	*section = TEXT;
- 	*addr = 0;
  	
  	/* We read the line */
- 	element = read_line( element );
- 	l = read_lex( element );
+ 	element = read_next( element );
+	l = read_lex( element );
+	
+	/* We get the line value; it is mandatory to add it to chain chRel symTab .. */
+	line = element->line;
  	
- 	/* If line is not empty */
+ 	/* If line is not empty, we analyse it */
  	
  	if ( l != NULL ) {
  	
 	 	if (  l->type == DIRECTIVE ) {
-	 		if ( strncmp( l->this.value + 1, "text", 4 ) ) {
-	 			*section = TEXT;
-	 			*addr = 0;
+	 	
+	 		
+	 		
+	 		
+	 		if ( !strcmp( l->this.value + 1, "text" ) ) {
+	 			section = TEXT;
+	 			addr = 0;
 	 		}
-	 		else if ( strncmp( l->this.value + 1, "data", 4 ) ) {
-	 			*section = DATA;
-	 			*addr = 0;
+	 		else if ( !strcmp( l->this.value + 1, "data" ) ) {
+	 			section = DATA;
+	 			addr = 0;
 	 		}
-	 		else if ( strncmp( l->this.value + 1, "bss", 3 ) ) {
-	 			*section = BSS;
-	 			*addr = 0;
+	 		else if ( !strcmp( l->this.value + 1, "bss" ) ) {
+	 			section = BSS;
+	 			addr = 0;
 	 		}
-	 		else if ( strncmp( l->this.value + 1, "set", 3 ) ) {
+	 		else if ( !strcmp( l->this.value + 1, "set" ) ) {
 	 			/* We ignore this directive for the moment, it will be used once optimisation has been coded */
 	 			
 	 		}
 	 		else {
 	 		
-	 			/* In other cases, launch decodeDirective and we increase addr. Indeed, we manage here all other directives that record bytes : .word, .byte ... */
-	 			
-	 			/* The code may be larger than a word. The directive is saved byte by byte, i.e. a char (because it is the smallest data memory can manage. */
-	 			
-	 			unsigned int byte = 0;
-	 			
-	 			char result[STRLEN];
-	 			decodeDirective( element, result );
-	 			
-	 			while ( byte < strlen(result) ) {
-		 			addCode( chCode, 0, *addr, result[byte], nline );
-		 			*addr = *addr + 1; /* Address is incremented byte by byte */
-		 		}
+	 			decodeDirective( c );
 	 			
 	 		}
 	 		
@@ -610,148 +720,49 @@ unsigned int registerToInt( char *input ) {
 	 	else if ( l->type == LABEL ) {
 	 		/* Here, it is a label, we add it to symTab without forgetting some verifications ;). After that, we launch fetch again to treat rest of the chain */
 	 		
-		 	addSymbol( l->this.value , symTab, *section, *addr, nline );
+		 	addSymbol( l->this.value , *symTab);
+		 
 		 	
-	 		if (read_line( element ) != NULL ) {
+	 		if (read_next( element ) != NULL ) {
 	 			
 	 			/* /!\ Recursive /!\ */
+	 			/* It is mandotory to proceed this way in order to avoid stack overflow */
+	 			chain * cFetch[4] = { &element, c[1], c[2], c[3] };		
 	 			
-		 		fetch( element, symTab, chCode, section, addr, instSet, nline );
-		 		*addr = *addr + 4;
+		 		fetch( cFetch, instSet );
 		 	}
 		 	
 	 	}
 	 	else {
 	 		/* The list is not empty, we are in the case of instruction */
-	 		
-	 		/* Add an element to code */
-	 		addCode( chCode, 0, *addr, decodeInstruction( element, instSet ), nline );
+
+	 		decodeInstruction( c , instSet );
 	 		
 	 	}
 	}
 	
 	return;
- 	
  }
  
- 
-
- 
-/* ##### Symbol functions ##### */
-
-
 /**
- * @param value String value of symbol
- * @param symTab Table to complete
- * @param section Section identified
- * @param addr Address in section
+ * @param element chain element which contains lexeme.
  * @return nothing
- * @brief Add the symbol to the table of symbols. Two path for resolution :
- * - if section is not defined, just add
- * - if section defined, add section and addr 
+ * @brief Get lexeme. Raise an error if missing.
  */
-
-void addSymbol( char * value, chain symTab, int section, unsigned int addr, unsigned int *nline ) {
-	chain element = symTab;
-	symbol temp;
-	int match = 0;
+lex get_lex( chain * element ) {
+	lex l;
 	
-	if ( section != UNDEFINED ) { /* In case of no section/addr filled, we just add the symbol to the tab */
-		while ( read_line( element ) != NULL && element->this.sym != NULL && !match ) {
-			temp = readSymbol( element );
-			if ( strcmp( temp->value, value ) ) {
-				match = 1;
-			}
-			element = read_line( element );
-		}
-		
-		/* If we have a match we update the symbol : */
-		if (match) {
-			temp->section = section;
-			temp->addr = addr;
-		}
-		else {
-		
-			/* Create a new element of the chain and add the symbol */
-			element = add_chain_next( element, *nline );
-			*nline = *nline + 1;
-			element->this.sym = createSymbol( value, section, addr );
-		}
+	*element = read_next( *element );
+	l = read_lex( *element );
+	
+	/* If NULL, raise an error */
+	if ( l == NULL ) {
+		ERROR_MSG("Syntax error : an operand is missing");
 	}
-	else {
-		while ( read_line( element ) != NULL && element->this.sym != NULL && !match ) {
-			temp = readSymbol( element );
-			if ( strcmp( temp->value, value ) ) {
-				match = 1;
-			}
-			element = read_line( element );
-		}
-		
-		/* If we have a match, nothing to do */
-		if (!match) {
-		
-			/* Create a new element of the chain and add the symbol */
-			element = add_chain_next( element, *nline );
-			*nline = *nline + 1;
-			element->this.sym = createSymbol( value, section, addr );
-		}
-		
-	}
-	
-	return;
+
+	return l;
 }
-
-/**
- * @param value String value of symbol
- * @param symTab Table of symbols
- * @return the symbol if found, NULL if not.
- * @brief Find a symbol. Usefull when an operand is decoded for instance.
- */
-
-symbol findSymbol( char * value, chain symTab ) {
-	chain element = symTab;
-	symbol temp;
-	
-	do {
-		temp = readSymbol( element );
-		if ( temp != NULL && strncmp( temp->value, value, strlen(value) ) ) {
-			return temp;
-		}
-	} while ( (element = read_line( element )) != NULL );
-	
-	return NULL;
-}
-
-/**
- * @param symTab Element of symTab.
- * @return readed symbol, NULL if nothing to read.
- * @brief Read a symbol from a chain element.
- */
-
-symbol readSymbol( chain symElem ) {
-	if ( symElem->this.sym != NULL ) {
-		return symElem->this.sym;
-	}
-	return NULL;
-}
-
-/**
- * @param section Symbol section, if UNDEFINED, symbol not defined.
- * @param addr If section defined, this value have a meaning.
- * @param value Symbol value
- * @return symbol.
- * @brief Create a symbol.
- */
-
-symbol createSymbol(char * value,  int section, unsigned int addr ) {
-	symbol sym = malloc ( sizeof( *sym ) );
-	
-	strcpy(sym->value , value);
-	sym->section = section;
-	sym->addr = addr;
-	
-	return sym;
-}
+ 
 
 
 /* ##### Code functions ##### */
@@ -761,10 +772,26 @@ symbol createSymbol(char * value,  int section, unsigned int addr ) {
  * @param addr Mandatory, the address of the code regarding to the section
  * @param value Unsigned int to store the code
  * @return a code.
+ * @brief Add the code to the chain.
+ */
+
+void addCode( chain chCode, unsigned int value ) {
+	/* We add a new element in the chain code */
+	chCode = add_chain_next( chCode );
+	
+	chCode->this.c = createCode(addr, value);
+	return;
+}
+
+/**
+ * @param line The line of the code. Can be used to final display. (Is like an ID)
+ * @param addr Mandatory, the address of the code regarding to the section
+ * @param value Unsigned int to store the code
+ * @return a code.
  * @brief Create a code container
  */
 
-code createCode( unsigned int addr, unsigned int value, unsigned int line ) {
+code createCode( unsigned int addr, unsigned int value ) {
 	code c = malloc ( sizeof( *c ) );
 	
 	c->line = line;
@@ -775,20 +802,17 @@ code createCode( unsigned int addr, unsigned int value, unsigned int line ) {
 }
 
 /**
- * @param line The line of the code. Can be used to final display. (Is like an ID)
- * @param addr Mandatory, the address of the code regarding to the section
- * @param value Unsigned int to store the code
+ * @param chCode The chain to analyse
  * @return a code.
- * @brief Add the code to the chain.
+ * @brief A simple way to get the code.
  */
 
-void addCode( chain chCode, unsigned int line, unsigned int addr, unsigned int value, unsigned int *nline  ) {
-	/* We add a new element in the chain code */
-	chCode = add_chain_next( chCode, *nline );
-	*nline = *nline + 1;
+code getCode( chain chCode ) {
 	
-	chCode->this.c = createCode(addr, value, *nline);
-	return;
+	if( chCode->this.c != NULL )
+		return chCode->this.c;
+	
+	return NULL;
 }
 
 

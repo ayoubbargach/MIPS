@@ -13,11 +13,11 @@
 
 #include <stdio.h>
 
-char*   state_to_string (int state);
-
 void	lex_read_line( char *, int, chain);
 void	lex_load_file( char *, unsigned int *, chain );
 void	lex_standardise( char*, char*  );
+
+char*   state_to_string (int state);
 
 #endif /* _LEX_H_ */
 

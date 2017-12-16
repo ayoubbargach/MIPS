@@ -16,24 +16,15 @@
 
 /* For the chain structure, we use the same structure "chain" */
 
-void instructionSet( inst* );
-inst makeInst( char*, char*, char*, char*, char*  );
-unsigned int binaryToInt( char* s );
+void decodeInstruction( chain ** , inst *);
+chain get_special( char *, chain, chain );
+void decodeDirective( chain ** );
 
-unsigned int decodeInstruction( chain, inst *);
-void decodeDirective( chain, char * );
+void fetch( chain**, inst * );
+lex get_lex( chain * );
 
-unsigned int registerToInt( char * );
-
-void fetch( chain, chain, chain, int*, unsigned int*, inst *, unsigned int * ); 
-
-void addSymbol( char * , chain, int , unsigned int, unsigned int * );
-symbol findSymbol( char * , chain);
-symbol readSymbol( chain );
-symbol createSymbol(char * ,  int, unsigned int );
-
-code createCode(unsigned int, unsigned int, unsigned int );
-void addCode( chain, unsigned int, unsigned int, unsigned int, unsigned int * );
+void addCode( chain, unsigned int );
+code createCode(unsigned int, unsigned int );
 
 
 #endif /* _SYN_H_ */

@@ -26,13 +26,14 @@
  * @brief This function performs lexical analysis of one standardized line.
  *
  */
-void lex_read_line( char *line, int nline, chain newline) {
+ 
+void lex_read_line( char *sline, int nline, chain newline) {
 
 	int i;
 	int sign;
 	
 	/* We first use newline as an initial affectation */
-	chain element = add_chain_next( newline, nline );
+	chain element = add_chain_next( newline );
 
 	
 	/* Useful when a token is defined as a comment, all the following tokens are also undertood as comments */
@@ -44,7 +45,7 @@ void lex_read_line( char *line, int nline, chain newline) {
     char save[STRLEN];
 
     /* copy the input line so that we can do anything with it without impacting outside world*/
-    memcpy( save, line, STRLEN );
+    memcpy( save, sline, STRLEN );
     
 
     /* get each token */
@@ -98,12 +99,19 @@ void lex_read_line( char *line, int nline, chain newline) {
     				else if ( token[i] == '8' || token[i] == '9' ) {
     					state = DECIMAL;
     				}
+    				else if ( token[i] == 'b' ) {
+    					state = BIT;
+    				}
     				else {
     					/* In all other cases, there is an error. */
     					state = ERROR;
     				}
         			
         			break;
+        			
+        		case BIT :
+					state = ( token[i] == '1' || token[i] == '0'  ) ? BIT : ERROR;
+					break; 
         		
         		case DECIMAL :
 					state = ( isdigit( token[i] ) ) ? DECIMAL : ERROR;
@@ -136,6 +144,9 @@ void lex_read_line( char *line, int nline, chain newline) {
         /* verifying if the last character is ":" */
         if ( token[strlen(token)-1] == ':' && state == SYMBOL) {
         	state = LABEL;
+        	
+        	/* We eat ':' */
+        	token[strlen(token)-1] = '\0';
         }
         
         
@@ -161,15 +172,16 @@ void lex_read_line( char *line, int nline, chain newline) {
 			/* TEST Code
 			if (read_lex(element) != NULL ) {
 				WARNING_MSG("%s", state_to_string( read_lex(element)->type ) );
-			} */
+			}*/
 			
 		
 			/* Create a new chain element to store the next lexeme */
-			element = add_chain_next( element, nline );
+			element = add_chain_next( element );
 		}
         
     }
-
+    
+	
     return;
 }
 
@@ -183,7 +195,7 @@ void lex_read_line( char *line, int nline, chain newline) {
 void lex_load_file( char *file, unsigned int *nlines, chain ch ) {
 
     FILE        *fp   = NULL;
-    char         line[STRLEN]; /* original source line */
+    char         fline[STRLEN]; /* original source line */
     char         res[2*STRLEN]; /* standardised source line, can be longeur due to some possible added spaces*/
 
 
@@ -201,22 +213,25 @@ void lex_load_file( char *file, unsigned int *nlines, chain ch ) {
     while(!feof(fp)) {
 
         /*read source code line-by-line */
-        if ( NULL != fgets( line, STRLEN-1, fp ) ) {
+        if ( NULL != fgets( fline, STRLEN-1, fp ) ) {
 
-            line[strlen(line)-1] = '\0';  /* eat final '\n' */
+            fline[strlen(fline)-1] = '\0';  /* eat final '\n' */
             (*nlines)++;
 
-            if ( 0 != strlen(line) ) {
-                lex_standardise( line, res );
+            if ( 0 != strlen(fline) ) {
+                lex_standardise( fline, res );
                 lex_read_line( res, *nlines, newline );
             }
         }
         
         /* We add a newline in our collection, the condition helps to avoid possible "blank" lines in the collection */
         
-        if (read_line( newline ) != NULL) {
-    		newline = add_chain_newline( newline, *nlines );
+        if (read_next( newline ) != NULL) {
+    		newline = add_chain_bottom( newline );
     	}
+    	
+    	/* Increment line */
+		line++;
     }
     
     
@@ -369,6 +384,10 @@ char* state_to_string(int state) {
     			return "DECIMAL_ZERO";
     			break;
     		
+    		case BIT :
+    			return "BIT";
+    			break;
+    			
     		case DECIMAL :
     			return "DECIMAL";
 				break;  
