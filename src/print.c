@@ -39,8 +39,10 @@ void print( chain * c, int mode, int nlines, char* file ) {
 	/* INIT */
 	symbol sym;
 	chain symTab = c[1];
-	chain chCode = c[2];
-	chain chRel = c[3];
+	chain chCode = read_next( c[2] );
+	chain chRel = read_next( c[3] );
+	
+	code codes;
 	
 	switch (mode) {
 		case LIST_MODE :
@@ -53,34 +55,82 @@ void print( chain * c, int mode, int nlines, char* file ) {
 			}
 			
 			/* Print code */
-			for (i=1; i<nlines; i++) {
+			for (i=1; i<nlines+1; i++) {
 				
-				if ( NULL != fgets( source_line, STRLEN-1, fp ) ) {
+				if ( NULL != fgets( source_line, STRLEN-1, fo ) ) {
 					
 					/* We get the first code */
-					chCode = read_next(chCode);
-				
-					WARNING_MSG("%3u␣%08X␣%08X␣%s\n",i,address,code,source_line);
+					codes = getCode( chCode );
+					
+					if ( codes->line == i ) {
+						fprintf(fp,"%3u\t%08X\t%08X\t%s",i,codes->addr,codes->value,source_line);
+						
+						chCode = read_next(chCode);
+						
+						while ( chCode != NULL && chCode->line == i ) {
+							codes = getCode( chCode );
+							fprintf(fp,"%3u\t%08X\t%08X\t%s\n",i,codes->addr,codes->value,"");
+							chCode = read_next(chCode);
+						}
+					}
+					else {
+						/* We only print source_line */
+						fprintf(fp,"%3u\t%s\t%s\t%s",i,"        ","        ",source_line);
+					}
+					
+					
 				}
 				
 				
 				/* fprintf(fp,"%3u␣%08X␣%08X␣%s\n",i,address,code,source_line); */
 				
-				/* fprintf(fp,"%08x\t%s\t.%-4s:%08x\t%s\n",address,type_reloc,sym_section,sym_address,sym_name); */
-				
 			}
 			
 			/* Print symbol table */
+			fprintf(fp,"\n.symtab\n");
 			while (symTab != NULL) {
 			
 				sym = readSymbol( symTab );
 				
 				if (sym != NULL) {
-					WARNING_MSG("%3d\t.%-4s:%08X\t%s\n", sym->line, section_to_string( sym->section ), sym->addr, sym->value);
 					fprintf(fp,"%3d\t.%-4s:%08X\t%s\n", sym->line, section_to_string( sym->section ), sym->addr, sym->value);
 				}
 				symTab = read_next( symTab );
 			}
+			
+			
+			
+			/* Print Reloc table */
+			
+			
+			fprintf(fp,"\nrel.text\n");
+			while ( chRel != NULL ) {
+				rel r = readRel( chRel );
+				
+				sym = r->sym;
+				
+				if ( sym->section == TEXT)				
+					fprintf(fp,"%08x\t%s\t.%-4s:%08x\t%s\n", r->addr, rel_to_string( r->type ), section_to_string( sym->section ), sym->addr, sym->value);
+				
+				chRel = read_next( chRel );
+			}
+			
+			
+			
+			fprintf(fp,"\nrel.data\n");
+			chRel = read_next( c[3] );
+			while ( chRel != NULL ) {
+				rel r = readRel( chRel );
+				
+				sym = r->sym;
+				
+				if ( sym->section == DATA)	
+					fprintf(fp,"%08x\t%s\t.%-4s:%08x\t%s\n", r->addr, rel_to_string( r->type ), section_to_string( sym->section ), sym->addr, sym->value);
+				
+				chRel = read_next( chRel );
+			}
+			
+			
 			
 			fclose(fp);
 			WARNING_MSG("LIST mode - file.l generated");
@@ -126,18 +176,53 @@ void print( chain * c, int mode, int nlines, char* file ) {
 char* section_to_string(int section) {
 	switch (section) {
     		case TEXT :
-    			return "TEXT";
+    			return "text";
     			break;
     		
     		case DATA :
-    			return "DATA";
+    			return "data";
     			break;
     			
-    		default :
-    			return "BSS";
+    		case BSS :
+    			return "bss";
+				break;
+			
+			default :
+    			return "UNDEFINED";
 				break;
 	}
 }
 
+
+/**
+ * @param 
+ * @return 
+ * @brief 
+ *
+ */
+ 
+char* rel_to_string(int section) {
+	switch (section) {
+    		case R_MIPS_32 :
+    			return "R_MIPS_32";
+    			break;
+    		
+    		case R_MIPS_26 :
+    			return "R_MIPS_26";
+    			break;
+    			
+    		case R_MIPS_HI16 :
+    			return "R_MIPS_HI16";
+				break;
+				
+			case R_MIPS_LO16 :
+    			return "R_MIPS_LO16";
+				break;
+			
+			default :
+    			return "NONE";
+				break;
+	}
+}
 
 

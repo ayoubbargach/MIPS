@@ -23,9 +23,9 @@ void decodeDirective( chain ** );
 void fetch( chain**, inst * );
 lex get_lex( chain * );
 
-void addCode( chain, unsigned int );
+void addCode( chain *, unsigned int );
 code createCode(unsigned int, unsigned int );
-
+code getCode( chain );
 
 #endif /* _SYN_H_ */
 

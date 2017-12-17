@@ -17,13 +17,13 @@
 unsigned int eval( lex, int, chain *, chain );
 void solve( chain symTab, chain chCode, chain r );
 
-void addSymbol( char * , chain );
+void addSymbol( char * , chain, int );
 symbol findSymbol( char * , chain );
 symbol readSymbol( chain );
-symbol createSymbol(char * );
+symbol createSymbol(char *, int );
 
-rel createRel( unsigned int addr, int type, char * value, symbol sym );
-void addRel( chain r,  unsigned int addr, int type, char * value, symbol sym, unsigned int *nline );
+rel createRel( int type, char * value, symbol sym );
+void addRel( chain * r, int, char *, symbol );
 rel readRel( chain );
 
 

@@ -46,11 +46,11 @@ unsigned int eval( lex l, int typeRel, chain * r, chain symTab) {
  			sym = findSymbol( l->this.value, symTab );
  			
  			if (sym == NULL) { /* If symbol is not yet defined */
- 				addSymbol( l->this.value , symTab);
+ 				addSymbol( l->this.value , symTab, 0);
  				/* addRel( r, addr, type, l->this.value, TODO Need some change in addsymbol function */
  			}
  			else {
- 				addRel(* r, addr, typeRel, l->this.value, sym, &line);
+ 				addRel( r, typeRel, l->this.value, sym);
  			}
  			
  			
@@ -103,39 +103,61 @@ void solve( chain symTab, chain chCode, chain r ) {
  * @param symTab Table to complete
  * @param section Section identified
  * @param addr Address in section
+ * @param label Boolean that explicit if we work with a label.
  * @return nothing
  * @brief Add the symbol to the table of symbols. Two path for resolution :
  * - if section is not defined, just add
  * - if section defined, add section and addr 
  */
 
-void addSymbol( char * value, chain symTab ) {
+void addSymbol( char * value, chain symTab, int label ) {
 	chain element = symTab;
 	symbol temp;
 	
 	
-	if ( section != UNDEFINED ) { /* In case of no section/addr filled, we just add the symbol to the tab */
+	/* If we are managing a label, we search if there is any previous entry to updae it. If not, add a new one. */
+	if (label) {
 	
-		temp = findSymbol( value, symTab );
+		if ( section != UNDEFINED ) { /* In case of no section/addr filled, we just add the symbol to the tab */
+	
+			temp = findSymbol( value, symTab );
 		
-		/* If we have a match we update the symbol : */
-		if (temp != NULL) {
-			temp->section = section;
-			temp->addr = addr;
+			/* If we have a match we update the symbol : */
+			if (temp != NULL) {
+				temp->section = section;
+				temp->addr = addr;
+				temp->line = line;
 			
+			}
+			else {
+				/* Create a new element of the chain and add the symbol */
+				while ( read_next(element)  != NULL ) 
+					element = read_next(element);
+				
+				element = add_chain_next( element );
+				element->this.sym = createSymbol( value, 1 );
+			
+			}
 		}
 		else {
-			/* Create a new element of the chain and add the symbol */
-			while ( read_next(element)  != NULL ) 
-				element = read_next(element);
-				
-			element = add_chain_next( element );
-			element->this.sym = createSymbol( value );
-			
+			ERROR_MSG("Decode error : no section defined yet, symbol can not be added");
 		}
 	}
 	else {
-		ERROR_MSG("Decode error : no section defined yet, symbol can not be added");
+		/* In this case, we only need to add a simple entry */
+		temp = findSymbol( value, symTab );
+		
+		/* If we have a match we update the symbol : */
+		if (temp == NULL) {
+			/* Create a new element of the chain and add the symbol */
+			while ( read_next(element)  != NULL ) 
+				element = read_next(element);
+			
+			element = add_chain_next( element );
+			
+			element->this.sym = createSymbol( value, 0 );
+		
+		}
 	}
 	
 	return;
@@ -179,16 +201,25 @@ symbol readSymbol( chain symElem ) {
  * @param section Symbol section, if UNDEFINED, symbol not defined.
  * @param addr If section defined, this value have a meaning.
  * @param value Symbol value
+ * @param label Boolean that explicit if we work with a label.
  * @return symbol.
  * @brief Create a symbol.
  */
 
-symbol createSymbol(char * value ) {
+symbol createSymbol(char * value, int label ) {
 	symbol sym = malloc ( sizeof( *sym ) );
 	
 	strcpy(sym->value , value);
-	sym->section = section;
-	sym->addr = addr;
+	
+	if (label) {
+		sym->section = section;
+		sym->addr = addr;
+	}
+	else {
+		sym->section = NONE;
+		sym->addr = 0;
+	}
+	
 	sym->line = line;
 	
 	return sym;
@@ -204,7 +235,7 @@ symbol createSymbol(char * value ) {
  * @brief 
  */
 
-rel createRel( unsigned int addr, int type, char * value, symbol sym ) {
+rel createRel(int type, char * value, symbol sym ) {
 	rel r = malloc ( sizeof( *r ) );
 	
 	/* Error Management */
@@ -226,18 +257,18 @@ rel createRel( unsigned int addr, int type, char * value, symbol sym ) {
  * @brief 
  */
 
-void addRel( chain r,  unsigned int addr, int type, char * value, symbol sym, unsigned int *nline  ) {
+void addRel( chain * r, int type, char * value, symbol sym  ) {
 	/* We add a new element in the chain code */
-	r = add_chain_next( r );
+	*r = add_chain_next( *r );
 	
-	r->this.r = createRel(addr, type, value, sym);
+	(*r)->this.r = createRel( type, value, sym);
 	
 	
 	return;
 }
 
 /**
- * @param
+ * @param 
  * @return
  * @brief 
  */

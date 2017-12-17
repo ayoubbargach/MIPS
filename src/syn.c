@@ -465,7 +465,9 @@ void decodeInstruction( chain ** c, inst * instSet ) {
 	
 	
 	/* In the end, we add the result code in the code chain without forgetting to increment addr ! */
-	addCode( *chCode,  code);
+
+	addCode( chCode,  code);
+	
 	addr = addr + 4;
 	
 	if ( nextInst == 1 ) {
@@ -577,7 +579,7 @@ void decodeDirective( chain ** c ) {
 			
 				code = eval(l, R_MIPS_32, chRel, symTab); /* We use there all the unsigned int ! */
 			
-				addCode( *chCode, code );
+				addCode( chCode, code );
 				addr = addr + 4;
 			}
 			
@@ -599,7 +601,7 @@ void decodeDirective( chain ** c ) {
 			
 				code = ((eval(l, NONE, chRel, symTab) << 24) >> 24 ); /* We need only the first 8 bits */
 			
-				addCode( *chCode, code );
+				addCode( chCode, code );
 				addr = addr + 1;
 			}
 			
@@ -622,7 +624,7 @@ void decodeDirective( chain ** c ) {
 				
 				code = l->this.value[byte];
 
-				addCode( *chCode, code );
+				addCode( chCode, code );
 				byte++;
 				addr = addr + 1; /* Address is incremented byte by byte */
 			}
@@ -643,7 +645,7 @@ void decodeDirective( chain ** c ) {
 			
 			int n = l->this.digit->this.integer; /* Number of uninitialized bytes */
 			for (i=0; i<n; i++) {
-				addCode( *chCode, 0 );
+				addCode( chCode, 0 );
 				addr = addr + 1;
 			}
 		}
@@ -653,6 +655,8 @@ void decodeDirective( chain ** c ) {
 	else {
 		ERROR_MSG("Decode error : directive %s unknown", l->this.value);
 	}
+	
+	
 	
  	return;
  
@@ -720,7 +724,7 @@ void decodeDirective( chain ** c ) {
 	 	else if ( l->type == LABEL ) {
 	 		/* Here, it is a label, we add it to symTab without forgetting some verifications ;). After that, we launch fetch again to treat rest of the chain */
 	 		
-		 	addSymbol( l->this.value , *symTab);
+		 	addSymbol( l->this.value , *symTab, 1);
 		 
 		 	
 	 		if (read_next( element ) != NULL ) {
@@ -775,11 +779,11 @@ lex get_lex( chain * element ) {
  * @brief Add the code to the chain.
  */
 
-void addCode( chain chCode, unsigned int value ) {
+void addCode( chain * chCode, unsigned int value ) {
 	/* We add a new element in the chain code */
-	chCode = add_chain_next( chCode );
+	*chCode = add_chain_next( *chCode );
 	
-	chCode->this.c = createCode(addr, value);
+	(*chCode)->this.c = createCode(addr, value);
 	return;
 }
 

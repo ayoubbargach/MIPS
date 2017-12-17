@@ -12,7 +12,8 @@
 
 void print( chain * c, int mode, int, char * );
 
-char* section_to_string(int section);
+char* section_to_string( int section );
+char* rel_to_string( int section );
 
 
 #endif /* _PRINT_H_ */
