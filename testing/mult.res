@@ -40,9 +40,9 @@
  40                   
  41                   .data 
  42 00000000 0CAABBCC .byte 12,0xAA,0xBB,0xCC,0xdd
- 42 00000004 DD    
+ 42 00000004 DD       
  43 00000005 FF       .byte 0xFF
- 44 00000006 AABBCCDD .word 0xAABBCCDD
+ 44 00000008 AABBCCDD .word 0xAABBCCDD
 
 .symtab
  21	.text:00000024	mult
@@ -56,3 +56,4 @@ rel.text
 00000050	R_MIPS_26	.text:00000054	EXIT
 
 rel.data
+

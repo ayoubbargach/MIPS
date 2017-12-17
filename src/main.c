@@ -30,6 +30,7 @@ int testID = 0;
 int section = UNDEFINED;
 unsigned int addr = 0;
 unsigned int line = 1;
+int typeCode = WORD;
 
 /**
  * @param exec Name of executable.
@@ -73,7 +74,7 @@ int main ( int argc, char *argv[] ) {
     /* ---------------- Options Management -------------------*/
 
     int opt;
-    int mode = ELF_MODE;
+    int mode = LIST_MODE;
     
 	while ((opt = getopt(argc, argv, "lbrt")) != -1) {
         switch (opt) {

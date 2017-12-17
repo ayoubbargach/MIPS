@@ -78,7 +78,7 @@
 \author{%
 \textsc{Ayoub Bargach} \\[1ex] % Your name, in case : \thanks{A thank you or further information}
 \normalsize Grenoble INP \\ % Your institution
-\normalsize https://github.com/bargacha/MIPS % Your email address
+\normalsize ayoub.bargach@phelma.grenoble-inp.fr % Your email address
 %\and % Uncomment if 2 authors are required, duplicate these 4 lines if more
 %\textsc{Jane Smith}\thanks{Corresponding author} \\[1ex] % Second author's name
 %\normalsize University of Utah \\ % Second author's institution
@@ -87,7 +87,7 @@
 \date{\today} % Leave empty to omit a date
 \renewcommand{\maketitlehookd}{%
 \begin{abstract}
-\noindent This documentation aim to explicit the way the MIPS assembly have been built. This project have been followed through my education in Phelma - Grenoble INP. A basic source files have been written by Francois Portet and Francois Cayre. The project goal is to build a complete assembler in C language. The biggest part is open source in my github. Due to lack of information about initial code license, formatting files have been deleted. I'm working on creating a more visual interface for education purposes. From structure to code, you will find a lot of explanation of how an assembler is built. A special thanks to all those who took time to help me when we was stucked.
+\noindent This documentation aim to explicit the way the MIPS assembly have been built. This project have been followed through my education in Phelma - Grenoble INP. A basic source files have been written by Francois Portet and Francois Cayre. The project goal is to build a complete assembler in C language. Due to lack of information about initial code license, no file have been shared. A special thanks to all those who took time to help me when we was stucked.
 \end{abstract}
 }
 
@@ -461,6 +461,11 @@ Relocation entries should be generated. Final verifications and decode will be m
 
 \subsection{Examples and test}
 
+Due to a lack of time, no additionnal test code have been developed.
+
+Relocation table works fine. You can print it by using the list command. It is the easiest whay to test it. For instructions like BEQ, a special relocation have been integrated : RELATIVE. It means that we have to add an offset who point on the interested intruction.
+
+
 %------------------------------------------------
 
 \section{Delivrable 4}
@@ -478,6 +483,26 @@ As it have been specified in former section, there is 3 types of different outpu
 
 \subsection{Examples and test}
 
+Due to a lack of time, no additionnal test code have been developed. Please refer to the conclusion to have the final details of the project.
+
+%------------------------------------------------
+
+\section{Conclusion - What is working ?}
+
+Here we sum up what is working.
+
+\begin{itemize}
+ \item All required instruction types are managed and working well : R, I and J.
+ \item All required pseudo-instructions are managed ! Also some special ones like Lw. To offer this possibility, we added an extension to instSet.txt semantic. By using *, you can add a second instruction to the first one, they are launched in the same time !
+ \item The symbol table is well built and automatically ordered.
+ \item NOT all directives work ! Due to a lack of time, .asciiz is NOT integrated yet. It is the only required directive not integrated.
+ \item The code should be improved. In the final countdown, I did not write a clean code. Some parts can be optmized.
+ \item The object and ELF mode are NOT managed yet.
+ \item Note that the memory management is optimized. It means that if you use directive .byte followed by .word, it will only use 5 bytes.
+ \item The extension -o is not finished yet, I worked on it but I did not share it because it does not work well. All optimization have been inspired from Architecture course of last year.
+\end{itemize}
+
+Thanks to all the scholar team for this inspiring project !!
 
 %----------------------------------------------------------------------------------------
 %	REFERENCE LIST
@@ -497,8 +522,6 @@ As it have been specified in former section, there is 3 types of different outpu
 \bibitem[Wikipedia, 2017]{MIPS}
 \newblock MIPS architecture
 
-\bibitem[Wikipedia, 2017]{RISC}
-\newblock 
 
 \end{thebibliography}
 

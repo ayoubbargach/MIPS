@@ -592,7 +592,7 @@ void decodeDirective( chain ** c ) {
 	}
 	else if ( !strcmp( l->this.value + 1, "byte" ) ) {
 	
-	
+		typeCode = BYTE;
 		directive = read_next( directive );
 		
 		while (directive != NULL) {
@@ -613,15 +613,16 @@ void decodeDirective( chain ** c ) {
 	}
 	else if ( !strcmp( l->this.value + 1, "asciiz" ) ) {
 	
-	
+		typeCode = BYTE;
 		directive = read_next( directive );
+		
 		
 		while (directive != NULL) { 
 			l = read_lex( directive );
 			
 			/* Here we add each string and we finish it by a char '\0', after that we translate using variable i */
-
-			while ( byte < strlen(l->this.value) ) {
+			WARNING_MSG("%s",l->this.value);
+			while ( byte < strlen(l->this.value) - 2 ) {
 				
 				code = l->this.value[byte];
 
@@ -637,7 +638,7 @@ void decodeDirective( chain ** c ) {
 	}
 	else if ( !strcmp( l->this.value + 1, "space" ) ) {
 	
-	
+		typeCode = BYTE;
 		directive = read_next( directive );
 		
 		if (directive != NULL) { /* If the chain is well built, it is not mandatory to verify if lex is NULL */
@@ -656,6 +657,9 @@ void decodeDirective( chain ** c ) {
 	else {
 		ERROR_MSG("Decode error : directive %s unknown", l->this.value);
 	}
+	
+	/* In all way we put typeCode at WORD */
+	typeCode = WORD;
 	
 	
 	
@@ -799,9 +803,12 @@ void addCode( chain * chCode, unsigned int value ) {
 code createCode( unsigned int addr, unsigned int value ) {
 	code c = malloc ( sizeof( *c ) );
 	
+	c->type = typeCode;
+	c->section = section;
 	c->line = line;
 	c->addr = addr;
 	c->value = value;
+	
 	
 	return c;
 }

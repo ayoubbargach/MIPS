@@ -345,14 +345,14 @@ To try lex\_standardise, run test 1 using file miam.s for instance :
 ./as-mips -t 1 tests/miam.s
 \end{lstlisting}
 
-It will print you the input and the standirized output. Normally, this function manage all basic cases. Of course, there is no further verifications in lexical analysis. It means that this function do not raise errors. It just bring an easy readable string that can be used after for further analysis.
+It will print you the input and the standardised output. Normally, this function manage all basic cases. Of course, there is no further verifications in lexical analysis. It means that this function do not raise errors. It just bring an easy readable string that can be used after for further analysis.
 
-To display lexeme chain, run test 2. It will print the recognized lexemes and their types.
+To display lexeme chain, \textbf{run test 2}. It will print the recognized lexemes and their types.
 
 To conclude :
 \begin{itemize}
- \item All instruction types are managed : R, I and J.
- \item A ``virtual'' type have been added, IB. It manages I instruction of this shape : LW \$6, 200(\$7).
+ \item A chain of lexemes is generated, it contains all relevant lexemes.
+ \item We manage bad written source code by standardising it before further analysis.
  \item Comments and punctuations are ignored.
  \item FSM manages decimal, octal, hexa, labels, registers, directives and symbols.
  \item You can find all lexeme and chain functions in the file functions.c
@@ -365,9 +365,7 @@ To conclude :
 \section{Delivrable 2}
 
 \subsection{Goals and features}
-In this deliverable, we start by generating the instruction set. The instruction set is the list of all instructions that are managed by our program. In MIPS context, there 3 kinds of instructions :
-
-% Ajouter une illustrations des différents types instType.png
+In this deliverable, we start by generating the instruction set. The instruction set is the list of all instructions that are taken into account by our program. In MIPS context, there 3 kinds of instructions :
 
 \begin{figure}[h!]
 \begin{center}

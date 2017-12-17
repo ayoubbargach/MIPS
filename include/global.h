@@ -80,6 +80,8 @@ enum { LIST_MODE, OBJECT_MODE, ELF_MODE, TEST_MODE };
 
 enum { NONE, R_MIPS_32, R_MIPS_26, R_MIPS_HI16, R_MIPS_LO16, RELATIVE };
 
+enum { WORD, BYTE};
+
 
 /*!
   \brief Type definition of digit.
@@ -149,8 +151,9 @@ typedef struct symbol_t {
 
 typedef struct code_t {
 	unsigned int line;
-	
+	int section;
 	unsigned int addr;
+	int type; /* BYTE WORD ... */
 	
 	/* Decoded code */
 	unsigned int value;
@@ -212,6 +215,7 @@ extern int testID;
 extern int section;
 extern unsigned int addr;
 extern unsigned int line;
+extern int typeCode;
 
 #endif /* _GLOBAL_H */
 

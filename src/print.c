@@ -35,6 +35,13 @@ void print( chain * c, int mode, int nlines, char* file ) {
 	FILE *fo = NULL;
 	char source_line[STRLEN];
 	int i = 1;
+	int j = 3;
+	int k = 0;
+	int n = 2;
+	int intCode = 0;
+	char strPrint[STRLEN] = "";
+	char strNumber[STRLEN];
+	int printed = 0;
 	
 	/* INIT */
 	symbol sym;
@@ -63,19 +70,103 @@ void print( chain * c, int mode, int nlines, char* file ) {
 					codes = getCode( chCode );
 					
 					if ( codes->line == i ) {
-						fprintf(fp,"%3u\t%08X\t%08X\t%s",i,codes->addr,codes->value,source_line);
 						
-						chCode = read_next(chCode);
+						/* In our project, bss can only be used with directive space */
 						
-						while ( chCode != NULL && chCode->line == i ) {
-							codes = getCode( chCode );
-							fprintf(fp,"%3u\t%08X\t%08X\t%s\n",i,codes->addr,codes->value,"");
-							chCode = read_next(chCode);
+						if (codes->section == BSS) {
+							fprintf(fp,"%3u %08X %s %s",i,codes->addr,"0000... ",source_line);
+						
+							/* We read all lines */
+							while ( chCode != NULL && chCode->line == i ) {
+								chCode = read_next(chCode);
+							}
+						}
+						else {
+							
+							
+							if (codes != NULL && codes->type == BYTE) {
+								if ( read_next(chCode) != NULL && read_next(chCode)->line == i ) {
+									intCode = codes->value << (j*2*4);
+									j--;
+								}
+								else {
+									intCode = codes->value;
+								}
+								
+								while ( read_next(chCode) != NULL && read_next(chCode)->line == i ) {
+									chCode = read_next(chCode);
+									codes = getCode( chCode );
+									
+									if ( j >= 0) { /* Branch used to print correctly the code */
+										intCode = intCode + (codes->value << (j*2*4));
+										j--;
+									}
+									else {
+										fprintf(fp,"%3u %08X %08X %s",i,codes->addr-4,intCode,source_line);
+										intCode = codes->value;
+										printed = 1;
+										j=3;
+									}
+								
+								
+									
+								}
+								
+								if ( j > 0 ) {
+									strcat(strPrint, "%3u %08X %0");
+									strNumber[0] = '8' - j * 2 ;
+									strNumber[1] = 'X';
+									k = j;
+									
+									while ( k != 0 ) {
+										strNumber[n] = ' ';
+										k--;
+										n++;
+									}
+									
+									strNumber[n] = '\0' ;
+									strcat(strPrint, strNumber);
+									strcat(strPrint, " %s");
+									
+									if ( printed ) {
+										strcpy(source_line,"\n");
+										printed = 0;
+									}
+									
+									
+									fprintf(fp,strPrint,i,codes->addr,intCode,source_line);
+									
+								}
+								
+								/* Reinit */
+								strPrint[0] = '\0';
+								
+								
+								chCode = read_next(chCode);
+							
+							}
+							else {
+								fprintf(fp,"%3u %08X %08X %s",i,codes->addr,codes->value,source_line);
+						
+								chCode = read_next(chCode);
+						
+								while ( chCode != NULL && chCode->line == i ) {	
+									codes = getCode( chCode );
+									fprintf(fp,"%3u %08X %08X %s\n",i,codes->addr,codes->value,"");
+									chCode = read_next(chCode);
+								}
+							}
+							
+							
+							
+							
+							
+							
 						}
 					}
 					else {
 						/* We only print source_line */
-						fprintf(fp,"%3u\t%s\t%s\t%s",i,"        ","        ",source_line);
+						fprintf(fp,"%3u %s %s %s",i,"        ","        ",source_line);
 					}
 					
 					
