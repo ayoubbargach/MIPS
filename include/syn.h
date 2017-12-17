@@ -26,6 +26,7 @@ lex get_lex( chain * );
 void addCode( chain *, unsigned int );
 code createCode(unsigned int, unsigned int );
 code getCode( chain );
+code findCode( chain, unsigned int );
 
 #endif /* _SYN_H_ */
 

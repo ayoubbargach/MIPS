@@ -48,7 +48,7 @@ void decodeInstruction( chain ** c, inst * instSet ) {
 	
 	int i = 0;
 	int nextInst = 0;
-	int typeRel = NONE;
+	int typeRel = R_MIPS_LO16;
 	unsigned int code = 0;
 	
 	
@@ -133,8 +133,8 @@ void decodeInstruction( chain ** c, inst * instSet ) {
         		typeRel = R_MIPS_HI16;
         	}
         	else if ( l->this.value[strlen(l->this.value) - 1] == '*' ) { /* It means that previous reloc was HI16 */
-        		typeRel = R_MIPS_LO16;
-        	}
+				typeRel = R_MIPS_LO16;
+			}
         	
         	
         	switch (instSet[i]->type) {
@@ -344,7 +344,7 @@ void decodeInstruction( chain ** c, inst * instSet ) {
 			/* /!\ END /!\ */
 			
 		}
-		else if ( instSet[i]->type == I2 ) { /* rs and rt order different */
+		else if ( instSet[i]->type == I2 ) { /* rs and rt order different => FOR BEQ TYPE OF INSTRUCTIONS !! */
 			
 			/* /!\ STRUCTURE /!\ */
 			
@@ -380,7 +380,7 @@ void decodeInstruction( chain ** c, inst * instSet ) {
 			
 				l = get_lex( &in );
 				
-				code = code + ((eval(l, typeRel, chRel, symTab) << 16) >> 16);
+				code = code + ((eval(l, RELATIVE, chRel, symTab) << 16) >> 16);
 				
 			}
 			
@@ -427,6 +427,7 @@ void decodeInstruction( chain ** c, inst * instSet ) {
 				
 				code = code + (l->this.digit->value << 21);
 			}
+			
 			
 			
 			/* /!\ END /!\ */
@@ -815,6 +816,27 @@ code getCode( chain chCode ) {
 	
 	if( chCode->this.c != NULL )
 		return chCode->this.c;
+	
+	return NULL;
+}
+
+
+/**
+ * @param chCode The chain to analyse
+ * @return a code.
+ * @brief A simple way to find code using address.
+ */
+
+code findCode( chain chCode, unsigned int addr ) {
+	code c;
+	while ( chCode != NULL ) {
+		c = getCode( chCode );
+		if ( c->addr == addr )
+			return c;
+			
+		chCode = read_next( chCode );
+	}
+	
 	
 	return NULL;
 }

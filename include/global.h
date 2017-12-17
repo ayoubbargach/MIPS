@@ -78,7 +78,7 @@ enum {UNDEFINED, TEXT, DATA, BSS};
 
 enum { LIST_MODE, OBJECT_MODE, ELF_MODE, TEST_MODE };
 
-enum { NONE, R_MIPS_32, R_MIPS_26, R_MIPS_HI16, R_MIPS_LO16 };
+enum { NONE, R_MIPS_32, R_MIPS_26, R_MIPS_HI16, R_MIPS_LO16, RELATIVE };
 
 
 /*!
@@ -173,6 +173,9 @@ typedef struct rel_t {
 	
 	/* Target code : Used to update code */
 	code * c;
+	
+	/* Relocation section origin */
+	int section;
 	
 	/* Symbol to relocate */
 	char value[STRLEN];

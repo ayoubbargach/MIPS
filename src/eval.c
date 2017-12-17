@@ -47,11 +47,11 @@ unsigned int eval( lex l, int typeRel, chain * r, chain symTab) {
  			
  			if (sym == NULL) { /* If symbol is not yet defined */
  				addSymbol( l->this.value , symTab, 0);
- 				/* addRel( r, addr, type, l->this.value, TODO Need some change in addsymbol function */
+ 				sym = findSymbol( l->this.value, symTab );
  			}
- 			else {
- 				addRel( r, typeRel, l->this.value, sym);
- 			}
+ 			
+ 			
+ 			addRel( r, typeRel, l->this.value, sym);
  			
  			
  		break;
@@ -72,24 +72,67 @@ unsigned int eval( lex l, int typeRel, chain * r, chain symTab) {
  *
  */
 
-void solve( chain symTab, chain chCode, chain r ) {
-	while (r != NULL){
-		switch (readRel(r)->type) {
-			case R_MIPS_32 :
-			break;
+void solve( chain symTab, chain chCode, chain chRel ) {
+	rel r;
+	chain lastR = chRel;
+	code c;
+	symbol sym;
+	
+	chRel = read_next( chRel );
+	chCode = read_next( chCode );
+	
+	while (chRel != NULL){
+		r = readRel( chRel );
+		
+		
+		c = findCode( chCode, r->addr );
+		sym = r->sym;
+		
+		if( c != NULL ) {
+		
+			/* The symbol is already linked into the relocation structure ! There is any more to do except update the code. */
 			
-			case R_MIPS_26 :
-			break;
+			switch (r->type) {
+				case R_MIPS_32 :
+					c->value = sym->addr;
+					lastR = chRel;
+				break;
+		
+				case R_MIPS_26 :
+					c->value = c->value + ((sym->addr) >> 2);
+				break;
+		
+				case R_MIPS_HI16 :
+					c->value = c->value + ((sym->addr) >> 16);
+				break;
+		
+				case R_MIPS_LO16 :
+					c->value = c->value + (((sym->addr) << 16) >> 16);
+				break;
+		
+				case RELATIVE : /* For relative relocations we delete theme from the rel chain ! */
+					c->value = c->value + (((((sym->addr - c->addr) << 16) >> 16) >> 2) - 1);
+					lastR->next = read_next(chRel); /* We eat this one */
+				break;
+		
+				default :
+				break;
+			}
 			
-			case R_MIPS_HI16 :
-			break;
-			
-			case R_MIPS_LO16 :
-			break;
-			
-			default :
-			break;
+			switch (r->type) {
+				case RELATIVE : /* Do nothing for this one */
+				break;
+		
+				default :
+					lastR = chRel;
+				break;
+			}
 		}
+		else {
+			ERROR_MSG("Internal error : A relocation failed due to unfindable code. Please contact devs.");
+		}
+		
+		chRel = read_next(chRel);
 	}
 	return;
 }
@@ -112,6 +155,8 @@ void solve( chain symTab, chain chCode, chain r ) {
 
 void addSymbol( char * value, chain symTab, int label ) {
 	chain element = symTab;
+	chain foundElement = symTab;
+	chain lastElement = symTab;
 	symbol temp;
 	
 	
@@ -122,11 +167,34 @@ void addSymbol( char * value, chain symTab, int label ) {
 	
 			temp = findSymbol( value, symTab );
 		
-			/* If we have a match we update the symbol : */
+			/* If we have a match we update the symbol by putting it in the good place : */
 			if (temp != NULL) {
+				/* We start by updating symbol */
 				temp->section = section;
 				temp->addr = addr;
 				temp->line = line;
+				
+				/* After that, we put the symbol in the right place */ 
+				while ( element != NULL && element->this.sym != temp ) {
+					lastElement = element;
+					element = read_next( element );
+				}
+				
+				foundElement = element;
+				
+				/* pull it from the chain */
+				lastElement->next = read_next( foundElement );
+				
+				element = symTab;
+				
+				while ( element != NULL && element->line < line ) {
+					lastElement = element;
+					element = read_next( element );
+				}
+				
+				lastElement->next = foundElement;
+				foundElement->next = element;
+				
 			
 			}
 			else {
@@ -216,7 +284,7 @@ symbol createSymbol(char * value, int label ) {
 		sym->addr = addr;
 	}
 	else {
-		sym->section = NONE;
+		sym->section = UNDEFINED;
 		sym->addr = 0;
 	}
 	
@@ -243,6 +311,7 @@ rel createRel(int type, char * value, symbol sym ) {
 		ERROR_MSG("Memory error : Malloc failed");
     }
     
+    r->section = section;
     r->addr = addr;
     r->type = type;
     r->sym = sym;

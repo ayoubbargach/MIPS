@@ -20,6 +20,7 @@
 #include <lex.h>
 #include <inst.h>
 #include <syn.h>
+#include <eval.h>
 #include <print.h>
 
 
@@ -208,7 +209,9 @@ int main ( int argc, char *argv[] ) {
     }
     
     /* SOLVE relocations section */
+    /* Here we need to use reloc chain and Code chain to solve relocation and delete relative ones */
     
+    solve( symTab, source[2], source[3] );
 
 
     /* ---------------- print results - See print.h -------------------*/

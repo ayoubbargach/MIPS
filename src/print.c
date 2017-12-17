@@ -93,7 +93,10 @@ void print( chain * c, int mode, int nlines, char* file ) {
 				sym = readSymbol( symTab );
 				
 				if (sym != NULL) {
-					fprintf(fp,"%3d\t.%-4s:%08X\t%s\n", sym->line, section_to_string( sym->section ), sym->addr, sym->value);
+					if (sym->section == NONE )
+						fprintf(fp,"%3d\t%-4s\t%s\n", sym->line, section_to_string( sym->section ), sym->value);
+					else
+						fprintf(fp,"%3d\t%-4s:%08X\t%s\n", sym->line, section_to_string( sym->section ), sym->addr, sym->value);
 				}
 				symTab = read_next( symTab );
 			}
@@ -109,8 +112,15 @@ void print( chain * c, int mode, int nlines, char* file ) {
 				
 				sym = r->sym;
 				
-				if ( sym->section == TEXT)				
-					fprintf(fp,"%08x\t%s\t.%-4s:%08x\t%s\n", r->addr, rel_to_string( r->type ), section_to_string( sym->section ), sym->addr, sym->value);
+				
+				if (r->section == TEXT) {
+					if (sym->section == NONE )
+						fprintf(fp,"%08x\t%s\t%-4s\t%s\n", r->addr, rel_to_string( r->type ), section_to_string( sym->section ), sym->value);
+					else
+						fprintf(fp,"%08x\t%s\t%-4s:%08x\t%s\n", r->addr, rel_to_string( r->type ), section_to_string( sym->section ), sym->addr, sym->value);
+					
+				}
+					
 				
 				chRel = read_next( chRel );
 			}
@@ -124,8 +134,13 @@ void print( chain * c, int mode, int nlines, char* file ) {
 				
 				sym = r->sym;
 				
-				if ( sym->section == DATA)	
-					fprintf(fp,"%08x\t%s\t.%-4s:%08x\t%s\n", r->addr, rel_to_string( r->type ), section_to_string( sym->section ), sym->addr, sym->value);
+				if (r->section == DATA) {
+					if (sym->section == NONE )
+						fprintf(fp,"%08x\t%s\t%-4s\t%s\n", r->addr, rel_to_string( r->type ), section_to_string( sym->section ), sym->value);
+					else
+						fprintf(fp,"%08x\t%s\t%-4s:%08x\t%s\n", r->addr, rel_to_string( r->type ), section_to_string( sym->section ), sym->addr, sym->value);
+					
+				}
 				
 				chRel = read_next( chRel );
 			}
@@ -176,19 +191,19 @@ void print( chain * c, int mode, int nlines, char* file ) {
 char* section_to_string(int section) {
 	switch (section) {
     		case TEXT :
-    			return "text";
+    			return ".text";
     			break;
     		
     		case DATA :
-    			return "data";
+    			return ".data";
     			break;
     			
     		case BSS :
-    			return "bss";
+    			return ".bss";
 				break;
 			
 			default :
-    			return "UNDEFINED";
+    			return "[UNDEFINED]";
 				break;
 	}
 }
@@ -217,6 +232,10 @@ char* rel_to_string(int section) {
 				
 			case R_MIPS_LO16 :
     			return "R_MIPS_LO16";
+				break;
+			
+			case RELATIVE :
+    			return "RELATIVE";
 				break;
 			
 			default :

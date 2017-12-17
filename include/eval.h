@@ -15,7 +15,7 @@
 #include <global.h>
 
 unsigned int eval( lex, int, chain *, chain );
-void solve( chain symTab, chain chCode, chain r );
+void solve( chain, chain , chain );
 
 void addSymbol( char * , chain, int );
 symbol findSymbol( char * , chain );
